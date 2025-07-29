@@ -1,0 +1,90 @@
+# AI Agent Web Service Docker Compose配置
+version: '3.8'
+
+services:
+  # Web服务
+  web-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ai-agent-web-service
+    ports:
+      - "8000:8000"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8000
+      - DEBUG=false
+    env_file:
+      - .env
+    volumes:
+      # 挂载agent-frameworks目录
+      - ../agent-frameworks:/app/agent-frameworks:ro
+      # 挂载日志目录
+      - ./logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - ai-agent-network
+
+  # 可选：Redis缓存服务
+  redis:
+    image: redis:7-alpine
+    container_name: ai-agent-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    networks:
+      - ai-agent-network
+    profiles:
+      - with-redis
+
+  # 可选：PostgreSQL数据库
+  postgres:
+    image: postgres:15-alpine
+    container_name: ai-agent-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=ai_agent
+      - POSTGRES_USER=ai_agent
+      - POSTGRES_PASSWORD=ai_agent_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - ai-agent-network
+    profiles:
+      - with-database
+
+  # 可选：Nginx反向代理
+  nginx:
+    image: nginx:alpine
+    container_name: ai-agent-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - web-service
+    restart: unless-stopped
+    networks:
+      - ai-agent-network
+    profiles:
+      - with-nginx
+
+volumes:
+  redis_data:
+  postgres_data:
+
+networks:
+  ai-agent-network:
+    driver: bridge
