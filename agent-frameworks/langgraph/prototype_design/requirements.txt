@@ -1,0 +1,27 @@
+# 高保真原型设计Agent依赖包
+
+# 核心框架
+langgraph>=0.2.0
+langsmith>=0.1.0
+langchain-core>=0.3.0
+
+# OpenAI兼容API (用于通义千问)
+openai>=1.0.0
+
+# 基础依赖
+typing-extensions>=4.0.0
+pydantic>=2.0.0
+
+# 环境变量管理
+python-dotenv>=1.0.0
+
+# 可选依赖（用于增强功能）
+# 如果需要更好的HTML解析
+beautifulsoup4>=4.12.0
+
+# 如果需要图像处理
+# Pillow>=10.0.0
+
+# 如果需要更多的Web服务器功能
+# fastapi>=0.100.0
+# uvicorn>=0.20.0

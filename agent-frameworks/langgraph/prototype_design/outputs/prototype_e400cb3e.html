@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高保真原型</title>
+    <style>
+/* styles.css */
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f4f4f4;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+.container {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    width: 90%;
+    max-width: 400px;
+}
+
+h1 {
+    color: #ff6347;
+}
+
+.settings {
+    margin-bottom: 20px;
+}
+
+.settings label {
+    margin-right: 10px;
+    font-weight: bold;
+}
+
+.settings input {
+    width: 50px;
+    padding: 5px;
+    margin-right: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.timer {
+    font-size: 48px;
+    color: #ff6347;
+    margin-bottom: 20px;
+}
+
+.controls button {
+    background-color: #ff6347;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    margin: 5px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.controls button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+.controls button:hover:not(:disabled) {
+    background-color: #e65c45;
+}
+
+#notification {
+    font-size: 24px;
+    color: #ff6347;
+    margin-top: 20px;
+    display: none;
+}
+
+.hidden {
+    display: none;
+}
+
+@media (max-width: 480px) {
+    .settings input {
+        width: 40px;
+    }
+
+    .timer {
+        font-size: 36px;
+    }
+
+    .controls button {
+        padding: 8px 16px;
+    }
+}
+    </style>
+</head>
+<body>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tomato Clock</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Tomato Clock</h1>
+        <div class="settings">
+            <label for="workTime">Work Time (minutes):</label>
+            <input type="number" id="workTime" value="25" min="1" max="60">
+            <label for="breakTime">Break Time (minutes):</label>
+            <input type="number" id="breakTime" value="5" min="1" max="60">
+        </div>
+        <div class="timer">
+            <span id="timeDisplay">25:00</span>
+        </div>
+        <div class="controls">
+            <button id="startBtn">Start</button>
+            <button id="pauseBtn" disabled>Pause</button>
+            <button id="stopBtn" disabled>Stop</button>
+            <button id="resetBtn" disabled>Reset</button>
+        </div>
+        <audio id="alarmSound" src="https://www.soundjay.com/button/beep-07.wav"></audio>
+        <div id="notification" class="hidden">Time's up!</div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
+    <script>
+// script.js
+document.addEventListener('DOMContentLoaded', () => {
+    const workTimeInput = document.getElementById('workTime');
+    const breakTimeInput = document.getElementById('breakTime');
+    const timeDisplay = document.getElementById('timeDisplay');
+    const startBtn = document.getElementById('startBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const alarmSound = document.getElementById('alarmSound');
+    const notification = document.getElementById('notification');
+
+    let intervalId;
+    let isWorking = true;
+    let remainingTime;
+
+    function updateDisplay(minutes, seconds) {
+        timeDisplay.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    }
+
+    function startTimer() {
+        let minutes = parseInt(isWorking ? workTimeInput.value : breakTimeInput.value);
+        let seconds = 0;
+        remainingTime = minutes * 60 + seconds;
+
+        intervalId = setInterval(() => {
+            if (remainingTime <= 0) {
+                clearInterval(intervalId);
+                alarmSound.play();
+                notification.style.display = 'block';
+                setTimeout(() => {
+                    notification.style.display = 'none';
+                }, 2000);
+                toggleWorkBreak();
+                startTimer();
+            } else {
+                remainingTime--;
+                minutes = Math.floor(remainingTime / 60);
+                seconds = remainingTime % 60;
+                updateDisplay(minutes, seconds);
+            }
+        }, 1000);
+
+        toggleButtons(true);
+    }
+
+    function pauseTimer() {
+        clearInterval(intervalId);
+        toggleButtons(false);
+    }
+
+    function stopTimer() {
+        clearInterval(intervalId);
+        remainingTime = null;
+        toggleButtons(false);
+        updateDisplay(parseInt(workTimeInput.value), 0);
+        isWorking = true;
+    }
+
+    function resetTimer() {
+        clearInterval(intervalId);
+        remainingTime = null;
+        toggleButtons(false);
+        updateDisplay(parseInt(workTimeInput.value), 0);
+        isWorking = true;
+    }
+
+    function toggleButtons(isRunning) {
+        startBtn.disabled = isRunning;
+        pauseBtn.disabled = !isRunning;
+        stopBtn.disabled = !isRunning;
+        resetBtn.disabled = !isRunning;
+    }
+
+    function toggleWorkBreak() {
+        isWorking = !isWorking;
+    }
+
+    startBtn.addEventListener('click', startTimer);
+    pauseBtn.addEventListener('click', pauseTimer);
+    stopBtn.addEventListener('click', stopTimer);
+    resetBtn.addEventListener('click', resetTimer);
+});
+    </script>
+</body>
+</html>

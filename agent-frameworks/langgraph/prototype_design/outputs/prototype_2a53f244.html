@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高保真原型</title>
+    <style>
+/* styles.css */
+:root {
+    --primary-color: #007bff;
+    --text-color: #ffffff;
+    --font-family: Arial, sans-serif;
+}
+
+body {
+    font-family: var(--font-family);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    background-color: #f0f0f0;
+}
+
+.container {
+    text-align: center;
+}
+
+.btn {
+    padding: 10px 20px;
+    font-size: 16px;
+    color: var(--text-color);
+    background-color: var(--primary-color);
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.btn:hover {
+    background-color: #0056b3; /* Darker shade of primary color */
+}
+
+.btn:focus {
+    outline: 2px solid #0056b3;
+    outline-offset: 2px;
+}
+
+@media (max-width: 600px) {
+    .btn {
+        padding: 8px 16px;
+        font-size: 14px;
+    }
+}
+    </style>
+</head>
+<body>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Button Component</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <button id="simpleButton" type="button" class="btn">Click Me</button>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
+    <script>
+// script.js
+document.addEventListener('DOMContentLoaded', () => {
+    const button = document.getElementById('simpleButton');
+
+    button.addEventListener('click', () => {
+        alert('Button clicked!');
+    });
+});
+    </script>
+</body>
+</html>

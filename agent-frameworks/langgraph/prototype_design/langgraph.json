@@ -1,0 +1,7 @@
+{
+  "dependencies": ["."],
+  "graphs": {
+    "prototype_design": "./graph.py:create_prototype_graph"
+  },
+  "env": ".env"
+}
