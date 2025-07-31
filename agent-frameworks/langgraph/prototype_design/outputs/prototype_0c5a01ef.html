@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高保真原型</title>
+    <style>
+/* styles.css */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f9;
+    color: #333;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.container {
+    display: flex;
+    width: 90%;
+    max-width: 1200px;
+    height: 80vh;
+    background-color: #fff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.chat-box, .mind-map {
+    width: 50%;
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-box header, .mind-map header {
+    background-color: #007bff;
+    color: #fff;
+    padding: 1rem;
+    text-align: center;
+}
+
+.chat-box main {
+    flex: 1;
+    padding: 1rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-box footer {
+    background-color: #e9ecef;
+    padding: 1rem;
+    text-align: center;
+}
+
+.chat-box input[type="text"] {
+    width: 80%;
+    padding: 0.5rem;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    outline: none;
+}
+
+.message {
+    margin-bottom: 1rem;
+    padding: 0.5rem;
+    border-radius: 4px;
+    max-width: 70%;
+}
+
+.message.ai {
+    background-color: #e9ecef;
+    align-self: flex-start;
+}
+
+.message.user {
+    background-color: #dcf8c6;
+    align-self: flex-end;
+}
+
+.mind-map main {
+    flex: 1;
+    padding: 1rem;
+    overflow-y: auto;
+}
+
+.mind-map ul {
+    list-style-type: none;
+    padding-left: 1rem;
+}
+
+.mind-map li {
+    position: relative;
+    padding-left: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.mind-map li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background-color: #007bff;
+}
+
+.mind-map li:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 0.25rem;
+    top: 0.5rem;
+    height: 100%;
+    border-left: 2px dashed #007bff;
+}
+
+@media (max-width: 768px) {
+    .container {
+        flex-direction: column;
+    }
+
+    .chat-box, .mind-map {
+        width: 100%;
+    }
+}
+    </style>
+</head>
+<body>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Chat + Mind Map</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <section class="chat-box">
+            <header>
+                <h1>AI Chat</h1>
+            </header>
+            <main>
+                <div class="message ai">
+                    <p>Hello! How can I assist you today?</p>
+                </div>
+                <div class="message user">
+                    <p>I need help with my project.</p>
+                </div>
+                <div class="message ai">
+                    <p>Of course! Please provide more details about your project.</p>
+                </div>
+            </main>
+            <footer>
+                <input type="text" placeholder="Type a message..." disabled>
+            </footer>
+        </section>
+        <section class="mind-map">
+            <header>
+                <h1>Mind Map</h1>
+            </header>
+            <main>
+                <ul>
+                    <li>
+                        Project
+                        <ul>
+                            <li>Research</li>
+                            <li>Design
+                                <ul>
+                                    <li>Wireframes</li>
+                                    <li>Mockups</li>
+                                </ul>
+                            </li>
+                            <li>Development</li>
+                            <li>Testing</li>
+                        </ul>
+                    </li>
+                </ul>
+            </main>
+        </section>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
+    <script>
+// script.js
+// Since the user requested no interaction, this file is empty.
+// However, if in the future interaction is needed, this is where the JavaScript code would go.
+    </script>
+</body>
+</html>

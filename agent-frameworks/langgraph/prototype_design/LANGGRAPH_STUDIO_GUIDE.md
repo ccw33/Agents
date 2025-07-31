@@ -57,7 +57,10 @@ LangGraph Studio 现在已经配置完成，您可以通过可视化界面与原
 ### 5. 观察执行过程
 在图形视图中观察：
 - Designer Agent 生成代码
-- Validator Agent 验证质量
+- Validator Agent 多模态验证质量
+  - 🖼️ 自动截取页面截图
+  - 🧠 使用qwen-vl-plus多模态模型分析
+  - 📊 提供视觉设计、功能完整性等多维度验证
 - 条件分支决定是否需要重新设计
 - Finalize 节点生成最终文件
 
@@ -66,12 +69,28 @@ LangGraph Studio 现在已经配置完成，您可以通过可视化界面与原
 ```mermaid
 graph TD
     START([开始]) --> designer[Designer Agent<br/>设计师代理<br/>使用qwen-coder-plus-latest]
-    designer --> validator[Validator Agent<br/>验证代理<br/>使用qwen-turbo]
+    designer --> validator[Validator Agent<br/>多模态验证代理<br/>使用qwen-vl-plus<br/>🖼️ 浏览器截图验证]
     validator --> decision{验证结果}
     decision -->|需要改进| designer
     decision -->|通过验证| finalize[Finalize<br/>最终化节点<br/>生成文件并启动服务器]
     finalize --> END([结束])
 ```
+
+## 🆕 新功能亮点
+
+### 多模态验证系统
+- **🖼️ 浏览器截图**: 自动生成HTML文件并在浏览器中渲染截图
+- **🧠 AI视觉分析**: 使用通义千问VL-Plus多模态模型分析页面截图
+- **📊 多维度验证**:
+  - 视觉设计 (界面美观度、布局合理性)
+  - 功能完整性 (从截图识别功能元素)
+  - 用户体验 (界面清晰度、交互设计)
+  - 响应式设计 (页面布局适配)
+  - 内容完整性 (必要元素存在性)
+
+### 智能端口管理
+- **🔄 自动端口检测**: 自动查找可用端口，避免冲突
+- **🌐 多服务器支持**: 支持同时运行多个原型服务器
 
 ## 💡 使用技巧
 

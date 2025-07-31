@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高保真原型</title>
+    <style>
+/* styles.css */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f9;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.container {
+    width: 90%;
+    max-width: 1200px;
+    text-align: center;
+}
+
+.title {
+    color: #333;
+    margin-bottom: 20px;
+}
+
+.map {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.node {
+    position: relative;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 10px 20px;
+    margin: 10px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.node:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.main-node {
+    font-size: 1.5em;
+    font-weight: bold;
+}
+
+.sub-nodes {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.sub-nodes .node {
+    font-size: 1em;
+}
+
+@media (max-width: 768px) {
+    .sub-nodes {
+        flex-direction: row;
+        justify-content: center;
+        align-items: flex-start;
+        width: 100%;
+        top: auto;
+        bottom: 100%;
+        left: 0;
+        transform: none;
+        margin-top: 0;
+        margin-bottom: 10px;
+    }
+}
+    </style>
+</head>
+<body>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Thinking Map</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">AI Thinking Map</h1>
+        <div class="map">
+            <div class="node main-node" id="main-node">
+                <span>Core Concept</span>
+                <div class="sub-nodes">
+                    <div class="node" onclick="toggleSubNodes(this)">
+                        <span>Idea 1</span>
+                        <div class="sub-nodes">
+                            <div class="node">
+                                <span>Detail A</span>
+                            </div>
+                            <div class="node">
+                                <span>Detail B</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="node" onclick="toggleSubNodes(this)">
+                        <span>Idea 2</span>
+                        <div class="sub-nodes">
+                            <div class="node">
+                                <span>Detail C</span>
+                            </div>
+                            <div class="node">
+                                <span>Detail D</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="node" onclick="toggleSubNodes(this)">
+                        <span>Idea 3</span>
+                        <div class="sub-nodes">
+                            <div class="node">
+                                <span>Detail E</span>
+                            </div>
+                            <div class="node">
+                                <span>Detail F</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
+    <script>
+// script.js
+function toggleSubNodes(element) {
+    const subNodes = element.querySelector('.sub-nodes');
+    if (subNodes.style.display === 'flex') {
+        subNodes.style.display = 'none';
+    } else {
+        subNodes.style.display = 'flex';
+    }
+}
+    </script>
+</body>
+</html>

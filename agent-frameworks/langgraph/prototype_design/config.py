@@ -83,13 +83,18 @@ class Config:
     @property
     def validator_model(self) -> str:
         """Validator使用的模型"""
-        return os.getenv("VALIDATOR_MODEL", "qwen-turbo")
+        return os.getenv("VALIDATOR_MODEL", "qwen-vl-plus")
     
     @property
     def max_input_tokens(self) -> int:
-        """最大输入token数"""
+        """最大输入token数（Designer使用）"""
         return int(os.getenv("MAX_INPUT_TOKENS", "8000"))
-    
+
+    @property
+    def validator_max_input_tokens(self) -> int:
+        """Validator最大输入token数"""
+        return int(os.getenv("VALIDATOR_MAX_INPUT_TOKENS", "128000"))
+
     @property
     def max_output_tokens(self) -> int:
         """最大输出token数"""
@@ -147,7 +152,8 @@ class Config:
         print("🔧 当前配置:")
         print(f"   Designer模型: {self.designer_model}")
         print(f"   Validator模型: {self.validator_model}")
-        print(f"   最大输入Token: {self.max_input_tokens}")
+        print(f"   Designer最大输入Token: {self.max_input_tokens}")
+        print(f"   Validator最大输入Token: {self.validator_max_input_tokens}")
         print(f"   最大输出Token: {self.max_output_tokens}")
         print(f"   迭代限制: {self.iteration_limit}")
         print(f"   服务器端口: {self.default_server_port}")

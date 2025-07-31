@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高保真原型</title>
+    <style>
+.container {
+    max-width: 800px;
+    margin: 50px auto;
+    padding: 20px;
+    text-align: center;
+    font-family: Arial, sans-serif;
+}
+
+h1 {
+    color: #e74c3c;
+    margin-bottom: 20px;
+}
+
+button {
+    background-color: #3498db;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+button:hover {
+    background-color: #2980b9;
+}
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>原型生成失败</h1>
+    <p>抱歉，由于技术问题，无法生成您请求的原型。请稍后重试。</p>
+    <button onclick="location.reload()">重新加载</button>
+</div>
+    <script>
+console.log('原型生成失败，使用fallback代码');
+    </script>
+</body>
+</html>

@@ -5,9 +5,11 @@
 ## 功能特性
 
 - 🎨 **智能设计**: 基于GPT-4的Designer Agent，能够理解用户需求并生成高质量的前端代码
-- 🔍 **质量验证**: Validator Agent对生成的原型进行多维度验证
+- 🔍 **多模态验证**: Validator Agent使用通义千问VL-Plus多模态模型，通过浏览器截图进行视觉验证
+- 🖥️ **浏览器自动化**: 集成Playwright自动化测试，真实渲染页面并截图分析
 - 🔄 **迭代优化**: 支持最多5次迭代，根据验证反馈持续改进
 - 🌐 **本地预览**: 自动启动HTTP服务器，提供本地访问地址
+- 🎯 **精准分析**: 基于实际页面渲染效果进行视觉设计、用户体验、响应式设计等多维度验证
 - 📊 **过程监控**: 集成LangSmith，提供完整的执行追踪和可视化
 - 📱 **响应式设计**: 生成的原型支持多设备适配
 
@@ -32,6 +34,9 @@ graph TD
 
 ```bash
 pip install -r requirements.txt
+
+# 安装Playwright浏览器（用于Validator截图功能）
+playwright install
 ```
 
 ## 环境配置
@@ -49,10 +54,11 @@ DASHSCOPE_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
 
 # 模型配置
 DESIGNER_MODEL=qwen-coder-plus-latest
-VALIDATOR_MODEL=qwen-turbo
+VALIDATOR_MODEL=qwen-vl-plus
 
 # Token限制配置
 MAX_INPUT_TOKENS=8000
+VALIDATOR_MAX_INPUT_TOKENS=128000
 MAX_OUTPUT_TOKENS=4000
 
 # LangSmith配置 (可选)

@@ -9,9 +9,35 @@ import http.server
 import socketserver
 import threading
 import time
+import socket
 from pathlib import Path
 from typing import Dict, Any
 from langsmith import traceable
+
+
+def find_available_port(start_port: int = 8000, max_attempts: int = 10) -> int:
+    """
+    查找可用的端口
+
+    Args:
+        start_port: 起始端口号
+        max_attempts: 最大尝试次数
+
+    Returns:
+        可用的端口号
+    """
+    for port in range(start_port, start_port + max_attempts):
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.bind(('', port))
+                return port
+        except OSError:
+            continue
+
+    # 如果都不可用，返回0让系统自动分配
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(('', 0))
+        return s.getsockname()[1]
 
 
 @traceable(run_type="tool", name="File Writer")
@@ -66,29 +92,35 @@ def write_prototype_file(html_code: str, css_code: str, js_code: str, output_dir
 def start_local_server(output_dir: str, port: int = 8000) -> str:
     """
     启动本地HTTP服务器
-    
+
     Args:
         output_dir: 服务器根目录
         port: 端口号
-        
+
     Returns:
         服务器访问地址
     """
+    # 查找可用端口
+    available_port = find_available_port(port)
+
     def run_server():
         os.chdir(output_dir)
         handler = http.server.SimpleHTTPRequestHandler
-        with socketserver.TCPServer(("", port), handler) as httpd:
-            print(f"服务器启动在端口 {port}")
-            httpd.serve_forever()
-    
+        try:
+            with socketserver.TCPServer(("", available_port), handler) as httpd:
+                print(f"🌐 服务器启动在端口 {available_port}")
+                httpd.serve_forever()
+        except Exception as e:
+            print(f"❌ 服务器启动失败: {e}")
+
     # 在后台线程启动服务器
     server_thread = threading.Thread(target=run_server, daemon=True)
     server_thread.start()
-    
+
     # 等待服务器启动
     time.sleep(1)
-    
-    return f"http://localhost:{port}"
+
+    return f"http://localhost:{available_port}"
 
 
 @traceable(run_type="tool", name="Code Validator")

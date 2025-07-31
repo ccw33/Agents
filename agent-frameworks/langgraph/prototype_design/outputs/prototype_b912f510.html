@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高保真原型</title>
+    <style>
+/* styles.css */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f9;
+    color: #333;
+}
+
+.container {
+    width: 100%;
+    max-width: 800px;
+    margin: 20px auto;
+    background-color: #fff;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+header {
+    background-color: #007bff;
+    color: #fff;
+    padding: 10px 0;
+}
+
+nav ul {
+    list-style-type: none;
+    display: flex;
+    justify-content: center;
+}
+
+nav ul li {
+    margin: 0 10px;
+}
+
+nav ul li button {
+    background-color: transparent;
+    border: none;
+    color: #fff;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 5px 10px;
+    border-bottom: 2px solid transparent;
+}
+
+nav ul li button.active {
+    border-bottom: 2px solid #fff;
+}
+
+main {
+    padding: 20px;
+}
+
+.chat-messages {
+    height: 300px;
+    overflow-y: auto;
+    border-bottom: 1px solid #ddd;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+}
+
+.chat-input {
+    display: flex;
+    justify-content: space-between;
+}
+
+.chat-input input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-right: 10px;
+}
+
+.chat-input button {
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.chat-input button:hover {
+    background-color: #0056b3;
+}
+
+#mindmap-section {
+    display: none;
+}
+
+#mindmap-container {
+    min-height: 300px;
+    border: 1px solid #ddd;
+    padding: 10px;
+}
+
+@media (max-width: 600px) {
+    nav ul li {
+        margin: 0 5px;
+    }
+
+    .chat-input input {
+        padding: 8px;
+    }
+
+    .chat-input button {
+        padding: 8px 15px;
+    }
+}
+    </style>
+</head>
+<body>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Mind Map Chat</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <nav>
+                <ul>
+                    <li><button id="chat-tab" class="active">Chat</button></li>
+                    <li><button id="mindmap-tab">Mind Map</button></li>
+                </ul>
+            </nav>
+        </header>
+        <main>
+            <section id="chat-section" class="active">
+                <div class="chat-messages">
+                    <!-- Chat messages will appear here -->
+                </div>
+                <div class="chat-input">
+                    <input type="text" id="chat-input" placeholder="Type a message...">
+                    <button id="send-button">Send</button>
+                </div>
+            </section>
+            <section id="mindmap-section">
+                <div id="mindmap-container">
+                    <!-- Mind map will be rendered here -->
+                </div>
+            </section>
+        </main>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
+    <script>
+// script.js
+document.addEventListener('DOMContentLoaded', () => {
+    const chatTab = document.getElementById('chat-tab');
+    const mindmapTab = document.getElementById('mindmap-tab');
+    const chatSection = document.getElementById('chat-section');
+    const mindmapSection = document.getElementById('mindmap-section');
+    const chatInput = document.getElementById('chat-input');
+    const sendButton = document.getElementById('send-button');
+    const chatMessages = document.querySelector('.chat-messages');
+
+    // Initial state: Chat section is active
+    chatTab.classList.add('active');
+    chatSection.classList.add('active');
+
+    // Function to toggle sections
+    function toggleSection(activeTab, activeSection, inactiveTab, inactiveSection) {
+        activeTab.classList.add('active');
+        activeSection.classList.add('active');
+        inactiveTab.classList.remove('active');
+        inactiveSection.classList.remove('active');
+    }
+
+    // Event listeners for tab buttons
+    chatTab.addEventListener('click', () => {
+        toggleSection(chatTab, chatSection, mindmapTab, mindmapSection);
+    });
+
+    mindmapTab.addEventListener('click', () => {
+        toggleSection(mindmapTab, mindmapSection, chatTab, chatSection);
+        renderMindMap();
+    });
+
+    // Event listener for send button
+    sendButton.addEventListener('click', sendMessage);
+    chatInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            sendMessage();
+        }
+    });
+
+    // Function to send a message
+    function sendMessage() {
+        const message = chatInput.value.trim();
+        if (message) {
+            const messageElement = document.createElement('div');
+            messageElement.textContent = message;
+            chatMessages.appendChild(messageElement);
+            chatInput.value = '';
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+    }
+
+    // Function to render a simple mind map
+    function renderMindMap() {
+        const mindmapContainer = document.getElementById('mindmap-container');
+        mindmapContainer.innerHTML = `
+            <div class="mindmap-node">
+                <div class="node-content">Main Idea</div>
+                <div class="sub-nodes">
+                    <div class="sub-node">
+                        <div class="node-content">Sub Idea 1</div>
+                    </div>
+                    <div class="sub-node">
+                        <div class="node-content">Sub Idea 2</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+});
+    </script>
+</body>
+</html>

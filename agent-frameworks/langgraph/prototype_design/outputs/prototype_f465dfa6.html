@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高保真原型</title>
+    <style>
+/* General Styles */
+body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    background-color: #f0f0f0;
+}
+
+.chess-board-container {
+    text-align: center;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+#chess-board {
+    display: grid;
+    grid-template-columns: repeat(8, 50px);
+    grid-template-rows: repeat(8, 50px);
+    gap: 1px;
+    margin: 20px auto;
+}
+
+.cell {
+    width: 50px;
+    height: 50px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+}
+
+.cell.light {
+    background-color: #f0d9b5;
+}
+
+.cell.dark {
+    background-color: #b58863;
+}
+
+/* Chess Pieces */
+.piece {
+    width: 40px;
+    height: 40px;
+    background-size: cover;
+    background-position: center;
+}
+
+/* Game Info */
+#game-info {
+    margin-bottom: 20px;
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+    #chess-board {
+        grid-template-columns: repeat(8, 40px);
+        grid-template-rows: repeat(8, 40px);
+    }
+
+    .cell {
+        width: 40px;
+        height: 40px;
+    }
+
+    .piece {
+        width: 32px;
+        height: 32px;
+    }
+}
+    </style>
+</head>
+<body>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>International Chess Board</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="chess-board-container">
+        <h1>International Chess Board</h1>
+        <div id="chess-board"></div>
+        <div id="game-info">
+            <p>Current Player: <span id="current-player">White</span></p>
+            <p>Moves: <span id="move-count">0</span></p>
+        </div>
+        <button id="reset-button">Reset Game</button>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
+    <script>
+// Initialize the chess board
+const chessBoard = document.getElementById('chess-board');
+const currentPlayerDisplay = document.getElementById('current-player');
+const moveCountDisplay = document.getElementById('move-count');
+const resetButton = document.getElementById('reset-button');
+
+let currentPlayer = 'White';
+let moveCount = 0;
+
+// Define the initial positions of the pieces
+const initialPieces = [
+    ['br', 'bn', 'bb', 'bq', 'bk', 'bb', 'bn', 'br'],
+    ['bp', 'bp', 'bp', 'bp', 'bp', 'bp', 'bp', 'bp'],
+    ['', '', '', '', '', '', '', ''],
+    ['', '', '', '', '', '', '', ''],
+    ['', '', '', '', '', '', '', ''],
+    ['', '', '', '', '', '', '', ''],
+    ['wp', 'wp', 'wp', 'wp', 'wp', 'wp', 'wp', 'wp'],
+    ['wr', 'wn', 'wb', 'wq', 'wk', 'wb', 'wn', 'wr']
+];
+
+// Piece images
+const pieceImages = {
+    wp: 'https://upload.wikimedia.org/wikipedia/commons/4/45/Chess_plt45.svg',
+    wn: 'https://upload.wikimedia.org/wikipedia/commons/7/77/Chess_nlt45.svg',
+    wb: 'https://upload.wikimedia.org/wikipedia/commons/b/b1/Chess_blt45.svg',
+    wr: 'https://upload.wikimedia.org/wikipedia/commons/7/72/Chess_rlt45.svg',
+    wq: 'https://upload.wikimedia.org/wikipedia/commons/1/15/Chess_qlt45.svg',
+    wk: 'https://upload.wikimedia.org/wikipedia/commons/4/42/Chess_klt45.svg',
+    bp: 'https://upload.wikimedia.org/wikipedia/commons/c/c7/Chess_pdt45.svg',
+    bn: 'https://upload.wikimedia.org/wikipedia/commons/2/28/Chess_ndt45.svg',
+    bb: 'https://upload.wikimedia.org/wikipedia/commons/9/98/Chess_bdt45.svg',
+    br: 'https://upload.wikimedia.org/wikipedia/commons/a/a0/Chess_rdt45.svg',
+    bq: 'https://upload.wikimedia.org/wikipedia/commons/4/47/Chess_qdt45.svg',
+    bk: 'https://upload.wikimedia.org/wikipedia/commons/f/f0/Chess_kdt45.svg'
+};
+
+// Function to create a cell
+function createCell(row, col) {
+    const cell = document.createElement('div');
+    cell.classList.add('cell');
+    cell.classList.add((row + col) % 2 === 0 ? 'light' : 'dark');
+    cell.dataset.row = row;
+    cell.dataset.col = col;
+    return cell;
+}
+
+// Function to create a piece
+function createPiece(pieceType) {
+    if (!pieceType) return null;
+    const piece = document.createElement('div');
+    piece.classList.add('piece');
+    piece.style.backgroundImage = `url(${pieceImages[pieceType]})`;
+    return piece;
+}
+
+// Function to initialize the board
+function initializeBoard() {
+    chessBoard.innerHTML = '';
+    for (let row = 0; row < 8; row++) {
+        for (let col = 0; col < 8; col++) {
+            const cell = createCell(row, col);
+            const pieceType = initialPieces[row][col];
+            if (pieceType) {
+                const piece = createPiece(pieceType);
+                cell.appendChild(piece);
+            }
+            cell.addEventListener('click', handleCellClick);
+            chessBoard.appendChild(cell);
+        }
+    }
+}
+
+// Function to handle cell click
+let selectedPiece = null;
+let selectedCell = null;
+
+function handleCellClick(event) {
+    const cell = event.target;
+    const row = parseInt(cell.dataset.row);
+    const col = parseInt(cell.dataset.col);
+
+    if (selectedPiece) {
+        // Move the piece
+        const targetCell = chessBoard.children[row * 8 + col];
+        const targetPiece = targetCell.querySelector('.piece');
+        const targetPieceType = targetPiece ? targetPiece.getAttribute('style').split('"')[1].split('/')[4] : '';
+
+        // Basic move validation (only empty cells for now)
+        if (!targetPiece || targetPieceType.startsWith(currentPlayer.toLowerCase())) {
+            alert('Invalid move!');
+            return;
+        }
+
+        // Remove the piece from the current cell
+        selectedCell.removeChild(selectedPiece);
+
+        // Add the piece to the target cell
+        targetCell.appendChild(selectedPiece);
+
+        // Update game state
+        currentPlayer = currentPlayer === 'White' ? 'Black' : 'White';
+        currentPlayerDisplay.textContent = currentPlayer;
+        moveCount++;
+        moveCountDisplay.textContent = moveCount;
+
+        // Deselect the piece
+        selectedPiece = null;
+        selectedCell = null;
+    } else {
+        // Select a piece
+        const piece = cell.querySelector('.piece');
+        if (piece) {
+            const pieceType = piece.getAttribute('style').split('"')[1].split('/')[4];
+            if (pieceType.startsWith(currentPlayer.toLowerCase())) {
+                selectedPiece = piece;
+                selectedCell = cell;
+            }
+        }
+    }
+}
+
+// Function to reset the game
+function resetGame() {
+    initializeBoard();
+    currentPlayer = 'White';
+    moveCount = 0;
+    currentPlayerDisplay.textContent = currentPlayer;
+    moveCountDisplay.textContent = moveCount;
+}
+
+// Initialize the board and reset button
+initializeBoard();
+resetButton.addEventListener('click', resetGame);
+    </script>
+</body>
+</html>

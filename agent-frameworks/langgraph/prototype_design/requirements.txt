@@ -15,12 +15,16 @@ pydantic>=2.0.0
 # 环境变量管理
 python-dotenv>=1.0.0
 
+# 浏览器自动化（用于Validator）
+browser-use>=0.1.0
+playwright>=1.40.0
+
 # 可选依赖（用于增强功能）
 # 如果需要更好的HTML解析
 beautifulsoup4>=4.12.0
 
 # 如果需要图像处理
-# Pillow>=10.0.0
+Pillow>=10.0.0
 
 # 如果需要更多的Web服务器功能
 # fastapi>=0.100.0
