@@ -3,13 +3,17 @@
 LangGraph框架的Agent服务实现
 
 通过子进程调用LangGraph框架中的Agent
+支持prototype_design等专用Agent
 """
 
 import os
+import sys
 import json
 import asyncio
 import subprocess
-from typing import Dict, Any, Optional
+import uuid
+from typing import Dict, Any, Optional, AsyncGenerator
+from pathlib import Path
 
 from app.services.agent_service import AgentService
 from app.core.config import get_agent_framework_path
@@ -18,11 +22,144 @@ from app.core.exceptions import AgentExecutionError, AgentNotFoundError
 
 class LangGraphService(AgentService):
     """LangGraph框架服务实现"""
-    
+
     def __init__(self):
         super().__init__("langgraph")
         self.framework_path = get_agent_framework_path("langgraph")
-    
+        # prototype_design的特殊路径
+        self.prototype_design_path = os.path.join(self.framework_path, "prototype_design")
+
+    async def execute_prototype_design_stream(
+        self,
+        requirements: str,
+        config: Optional[Dict[str, Any]] = None
+    ) -> AsyncGenerator[Dict[str, Any], None]:
+        """
+        流式执行prototype_design agent
+
+        Args:
+            requirements: 原型设计需求
+            config: 执行配置
+
+        Yields:
+            设计过程中的事件和最终结果
+        """
+        # 添加prototype_design路径到Python路径
+        sys.path.insert(0, self.prototype_design_path)
+
+        try:
+            # 导入prototype_design模块
+            from graph import PrototypeDesignWorkflow
+
+            # 创建工作流实例
+            workflow = PrototypeDesignWorkflow()
+            thread_id = str(uuid.uuid4())
+
+            # 推送开始事件
+            yield {
+                "type": "start",
+                "message": "开始原型设计",
+                "requirements": requirements,
+                "thread_id": thread_id
+            }
+
+            # 流式执行并推送进度
+            for event in workflow.stream_run(requirements, thread_id):
+                # 转换事件格式
+                for node_name, node_data in event.items():
+                    if node_name == "designer":
+                        yield {
+                            "type": "progress",
+                            "step": "designer",
+                            "message": f"Designer正在工作... (第{node_data.get('iteration_count', 0)}次迭代)",
+                            "data": node_data
+                        }
+                    elif node_name == "validator":
+                        result = node_data.get('validation_result', 'UNKNOWN')
+                        feedback = node_data.get('validation_feedback', '')
+                        yield {
+                            "type": "progress",
+                            "step": "validator",
+                            "message": f"Validator验证结果: {result}",
+                            "validation_result": result,
+                            "feedback": feedback[:200] + "..." if len(feedback) > 200 else feedback,
+                            "data": node_data
+                        }
+                    elif node_name == "finalize":
+                        yield {
+                            "type": "progress",
+                            "step": "finalize",
+                            "message": "正在生成最终原型...",
+                            "data": node_data
+                        }
+
+            # 获取最终结果
+            final_result = workflow.run(requirements, thread_id)
+
+            # 推送完成事件
+            yield {
+                "type": "complete",
+                "message": "原型设计完成",
+                "success": final_result.get("success", False),
+                "result": final_result
+            }
+
+        except Exception as e:
+            # 推送错误事件
+            yield {
+                "type": "error",
+                "message": f"原型设计失败: {str(e)}",
+                "error": str(e)
+            }
+        finally:
+            # 清理Python路径
+            if self.prototype_design_path in sys.path:
+                sys.path.remove(self.prototype_design_path)
+
+    async def _execute_prototype_design(
+        self,
+        input_data: Dict[str, Any],
+        config: Optional[Dict[str, Any]] = None,
+        timeout: int = 600  # prototype_design需要更长时间
+    ) -> Dict[str, Any]:
+        """
+        执行prototype_design agent（非流式）
+
+        Args:
+            input_data: 输入数据，应包含requirements字段
+            config: 执行配置
+            timeout: 超时时间
+
+        Returns:
+            执行结果
+        """
+        requirements = input_data.get("requirements")
+        if not requirements:
+            raise AgentExecutionError("prototype_design需要requirements参数")
+
+        # 添加prototype_design路径到Python路径
+        sys.path.insert(0, self.prototype_design_path)
+
+        try:
+            # 导入prototype_design模块
+            from graph import PrototypeDesignWorkflow
+
+            # 创建工作流实例
+            workflow = PrototypeDesignWorkflow()
+            thread_id = str(uuid.uuid4())
+
+            # 执行设计
+            result = await asyncio.to_thread(workflow.run, requirements, thread_id)
+
+            return result
+
+        except Exception as e:
+            raise AgentExecutionError(f"prototype_design执行失败: {str(e)}")
+        finally:
+            # 清理Python路径
+            if self.prototype_design_path in sys.path:
+                sys.path.remove(self.prototype_design_path)
+
     async def execute_agent(
         self,
         agent_type: str,
@@ -31,7 +168,11 @@ class LangGraphService(AgentService):
         timeout: int = 300
     ) -> Dict[str, Any]:
         """执行LangGraph Agent"""
-        
+
+        # 特殊处理prototype_design
+        if agent_type == "prototype_design":
+            return await self._execute_prototype_design(input_data, config, timeout)
+
         # 准备执行参数
         execution_params = {
             "agent_type": agent_type,
@@ -146,8 +287,8 @@ class LangGraphService(AgentService):
             return agents_info
             
         except FileNotFoundError:
-            # 如果没有list_agents.py，返回默认信息
-            return {
+            # 如果没有list_agents.py，返回默认信息（包含prototype_design）
+            agents_info = {
                 "framework": "langgraph",
                 "agents": {
                     "chat_agent": {
@@ -160,6 +301,33 @@ class LangGraphService(AgentService):
                     }
                 }
             }
+
+            # 检查prototype_design是否可用
+            if os.path.exists(self.prototype_design_path):
+                agents_info["agents"]["prototype_design"] = {
+                    "description": "高保真原型设计Agent，基于LangGraph和多模态验证",
+                    "input_schema": {
+                        "requirements": "str"
+                    },
+                    "features": [
+                        "智能设计生成HTML/CSS/JavaScript",
+                        "多模态验证（截图分析）",
+                        "迭代优化（最多5次）",
+                        "本地服务器预览",
+                        "响应式设计支持"
+                    ],
+                    "output_schema": {
+                        "success": "bool",
+                        "prototype_url": "str",
+                        "iteration_count": "int",
+                        "is_approved": "bool",
+                        "html_code": "str",
+                        "css_code": "str",
+                        "js_code": "str"
+                    }
+                }
+
+            return agents_info
         except json.JSONDecodeError:
             raise AgentExecutionError("Agent列表输出格式错误")
     

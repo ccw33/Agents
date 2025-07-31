@@ -115,11 +115,39 @@ class CrewAIRequest(BaseModel):
         }
 
 
+class PrototypeDesignRequest(BaseModel):
+    """原型设计请求"""
+
+    requirements: str = Field(..., description="原型设计需求描述", min_length=10)
+    config: Optional[Dict[str, Any]] = Field(default=None, description="设计配置")
+    stream: bool = Field(default=True, description="是否使用流式响应")
+
+    @validator('requirements')
+    def validate_requirements(cls, v):
+        if not v.strip():
+            raise ValueError('requirements不能为空')
+        if len(v.strip()) < 10:
+            raise ValueError('requirements描述过于简短，请提供更详细的需求')
+        return v.strip()
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "requirements": "创建一个现代化的登录页面，包含用户名和密码输入框，登录按钮，以及忘记密码链接。使用蓝色主题，要求响应式设计。",
+                "config": {
+                    "max_iterations": 5,
+                    "auto_open_browser": False
+                },
+                "stream": True
+            }
+        }
+
+
 class HealthCheckRequest(BaseModel):
     """健康检查请求"""
-    
+
     check_frameworks: bool = Field(default=True, description="是否检查框架状态")
-    
+
     class Config:
         schema_extra = {
             "example": {

@@ -61,6 +61,7 @@ class Settings(BaseSettings):
         env_file = ".env"
         env_file_encoding = "utf-8"
         case_sensitive = True
+        extra = "ignore"  # 忽略额外的环境变量
 
 
 # 创建全局配置实例
@@ -81,9 +82,10 @@ def get_agent_framework_path(framework: str) -> str:
     
     # 转换为绝对路径
     if not os.path.isabs(path):
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        path = os.path.join(current_dir, path)
-    
+        # 从web-service目录开始计算相对路径
+        web_service_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        path = os.path.join(web_service_dir, path)
+
     return os.path.abspath(path)
 
 

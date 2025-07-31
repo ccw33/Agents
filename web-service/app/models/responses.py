@@ -158,14 +158,78 @@ class HealthCheckResponse(BaseModel):
         }
 
 
+class PrototypeDesignResponse(BaseModel):
+    """原型设计响应"""
+
+    status: ExecutionStatus = Field(..., description="执行状态")
+    success: bool = Field(..., description="是否成功")
+    prototype_url: Optional[str] = Field(default=None, description="原型访问地址")
+    iteration_count: int = Field(default=0, description="迭代次数")
+    is_approved: bool = Field(default=False, description="是否通过验证")
+    validation_feedback: Optional[str] = Field(default=None, description="验证反馈")
+    html_code: Optional[str] = Field(default=None, description="生成的HTML代码")
+    css_code: Optional[str] = Field(default=None, description="生成的CSS代码")
+    js_code: Optional[str] = Field(default=None, description="生成的JavaScript代码")
+    error: Optional[str] = Field(default=None, description="错误信息")
+    execution_time: float = Field(..., description="执行时间(秒)")
+    timestamp: datetime = Field(default_factory=datetime.now, description="响应时间戳")
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "status": "success",
+                "success": True,
+                "prototype_url": "http://localhost:8000/prototype_abc123.html",
+                "iteration_count": 2,
+                "is_approved": True,
+                "validation_feedback": "原型设计符合要求，界面美观，响应式设计良好",
+                "html_code": "<!DOCTYPE html><html>...",
+                "css_code": "body { margin: 0; padding: 0; }...",
+                "js_code": "document.addEventListener('DOMContentLoaded', function() {...",
+                "error": None,
+                "execution_time": 125.6,
+                "timestamp": "2024-01-15T10:30:00"
+            }
+        }
+
+
+class PrototypeDesignStreamEvent(BaseModel):
+    """原型设计流式事件"""
+
+    type: str = Field(..., description="事件类型: start, progress, complete, error")
+    message: str = Field(..., description="事件消息")
+    step: Optional[str] = Field(default=None, description="当前步骤: designer, validator, finalize")
+    validation_result: Optional[str] = Field(default=None, description="验证结果")
+    feedback: Optional[str] = Field(default=None, description="反馈信息")
+    data: Optional[Dict[str, Any]] = Field(default=None, description="事件数据")
+    result: Optional[Dict[str, Any]] = Field(default=None, description="最终结果")
+    error: Optional[str] = Field(default=None, description="错误信息")
+    timestamp: datetime = Field(default_factory=datetime.now, description="事件时间戳")
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "type": "progress",
+                "message": "Designer正在工作... (第1次迭代)",
+                "step": "designer",
+                "validation_result": None,
+                "feedback": None,
+                "data": {"iteration_count": 1},
+                "result": None,
+                "error": None,
+                "timestamp": "2024-01-15T10:30:00"
+            }
+        }
+
+
 class ErrorResponse(BaseModel):
     """错误响应"""
-    
+
     error: str = Field(..., description="错误信息")
     detail: Optional[str] = Field(default=None, description="错误详情")
     error_code: Optional[str] = Field(default=None, description="错误代码")
     timestamp: datetime = Field(default_factory=datetime.now, description="错误时间")
-    
+
     class Config:
         schema_extra = {
             "example": {
