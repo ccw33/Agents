@@ -36,14 +36,27 @@ AI Agent统一Web服务接口，提供多框架Agent的HTTP API访问。
 
 ```
 web-service/
-├── app/
+├── app/                        # 应用主目录
 │   ├── main.py                 # 主应用入口（最新完整版本）
 │   ├── api/v1/                 # API路由
 │   ├── core/                   # 核心配置
 │   ├── models/                 # 数据模型
 │   ├── services/               # 业务服务
 │   └── prototype_outputs/      # 原型文件输出
+├── k8s/                        # Kubernetes部署配置
+│   ├── namespace.yaml          # 命名空间配置
+│   ├── configmap.yaml         # 配置映射
+│   ├── secret.yaml            # 密钥配置
+│   ├── deployment.yaml        # 部署配置
+│   ├── service.yaml           # 服务配置
+│   └── ingress.yaml           # 入口配置（可选）
+├── scripts/                    # 部署和管理脚本
+│   ├── nginx-deploy.sh        # Nginx K8s部署脚本
+│   └── cleanup.sh             # 清理脚本
 ├── requirements.txt            # 依赖管理
+├── Dockerfile                  # Docker构建文件
+├── docker-compose.yml          # Docker Compose配置
+├── K8S_DEPLOYMENT_GUIDE.md     # Kubernetes部署指南
 └── README.md                  # 项目文档
 ```
 
@@ -75,6 +88,68 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000
 - **API文档**: http://localhost:8000/docs
 - **健康检查**: http://localhost:8000/health
 - **PrototypeDesign**: http://localhost:8000/api/v1/prototype_design/
+
+## 🚀 Kubernetes部署
+
+### 快速部署到K8s集群
+
+```bash
+# 部署AI Agent Web Service到K8s
+./scripts/nginx-deploy.sh deploy
+
+# 清理K8s部署
+./scripts/nginx-deploy.sh cleanup
+```
+
+### 内网域名访问
+
+部署成功后，集群内服务可通过以下域名访问：
+
+```bash
+# 完整域名
+http://web-service.ai-agents.svc.cluster.local:8000
+
+# 简化域名（同命名空间内）
+http://web-service:8000
+
+# ClusterIP直接访问
+http://<CLUSTER-IP>:8000
+```
+
+### 外部访问
+
+```bash
+# NodePort访问
+http://<NODE-IP>:30800
+
+# Port-forward访问
+kubectl port-forward -n ai-agents service/web-service 8080:8000
+```
+
+详细部署指南请参考：[K8S_DEPLOYMENT_GUIDE.md](K8S_DEPLOYMENT_GUIDE.md)
+
+## 📚 API文档
+
+### 集群内部调用
+
+- **完整API指南**: [K8S_INTERNAL_API_GUIDE.md](K8S_INTERNAL_API_GUIDE.md)
+- **快速参考**: [API_QUICK_REFERENCE.md](API_QUICK_REFERENCE.md)
+- **OpenAPI规范**: [openapi.yaml](openapi.yaml)
+
+### 快速调用示例
+
+```bash
+# 健康检查
+curl http://web-service.ai-agents.svc.cluster.local:8000/health
+
+# 获取服务信息
+curl http://web-service.ai-agents.svc.cluster.local:8000/api/v1/info
+
+# 创建原型设计
+curl -X POST http://web-service.ai-agents.svc.cluster.local:8000/api/v1/prototype_design/design \
+  -H "Content-Type: application/json" \
+  -d '{"requirement": "用户管理页面", "style": "现代简约"}'
+```
 
 ## 🎨 PrototypeDesign API使用
 

@@ -17,6 +17,29 @@ python-json-logger==2.0.7
 # 进程管理
 subprocess32==3.5.4; python_version < '3.0'
 
+# PrototypeDesign Agent依赖
+# 核心框架
+langgraph>=0.2.0
+langsmith>=0.1.0
+langchain-core>=0.3.0
+
+# OpenAI兼容API (用于通义千问)
+openai>=1.0.0
+
+# 基础依赖
+typing-extensions>=4.0.0
+
+# 环境变量管理
+python-dotenv>=1.0.0
+
+# 浏览器自动化（用于Validator）
+browser-use>=0.1.0
+playwright>=1.40.0
+
+# HTML解析和图像处理
+beautifulsoup4>=4.12.0
+Pillow>=10.0.0
+
 # 开发和测试
 pytest==7.4.3
 pytest-asyncio==0.21.1

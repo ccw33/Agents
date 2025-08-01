@@ -1,0 +1,283 @@
+openapi: 3.0.3
+info:
+  title: AI Agent Web Service
+  description: |
+    AI Agent统一Web服务API，提供PrototypeDesign Agent等AI服务的统一接口。
+    
+    ## 内网访问地址
+    - 完整域名: `http://web-service.ai-agents.svc.cluster.local:8000`
+    - 简化域名: `http://web-service:8000` (同命名空间内)
+    
+    ## 特性
+    - 内网域名访问
+    - 服务发现
+    - 负载均衡
+    - 健康检查
+    - 多副本部署
+  version: 1.0.0
+  contact:
+    name: AI Agent开发团队
+    email: support@aiagent.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://web-service.ai-agents.svc.cluster.local:8000
+    description: K8s集群内网地址（完整域名）
+  - url: http://web-service:8000
+    description: K8s集群内网地址（简化域名，同命名空间）
+
+paths:
+  /health:
+    get:
+      summary: 健康检查
+      description: 检查服务健康状态，用于K8s探针和服务监控
+      operationId: healthCheck
+      tags:
+        - 监控
+      responses:
+        '200':
+          description: 服务健康
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              example:
+                status: "healthy"
+                service: "ai-agent-web-service"
+                version: "1.0.0"
+                timestamp: "2025-07-31T11:56:57+00:00"
+                environment: "kubernetes"
+                deployment: "nginx-based"
+
+  /api/v1/info:
+    get:
+      summary: 服务信息
+      description: 获取服务详细信息，用于服务发现和配置
+      operationId: getServiceInfo
+      tags:
+        - 服务信息
+      responses:
+        '200':
+          description: 服务信息
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceInfoResponse'
+
+  /api/v1/prototype_design/health:
+    get:
+      summary: Agent健康检查
+      description: 检查PrototypeDesign Agent的健康状态
+      operationId: checkAgentHealth
+      tags:
+        - Agent
+        - 监控
+      responses:
+        '200':
+          description: Agent健康状态
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentHealthResponse'
+
+  /api/v1/prototype_design/design:
+    post:
+      summary: 原型设计
+      description: 调用PrototypeDesign Agent进行原型设计
+      operationId: createPrototype
+      tags:
+        - Agent
+        - 原型设计
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DesignRequest'
+            example:
+              requirement: "创建一个用户管理页面"
+              style: "现代简约"
+      responses:
+        '200':
+          description: 设计成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DesignResponse'
+        '400':
+          description: 请求参数错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: 服务器内部错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - service
+        - version
+        - timestamp
+      properties:
+        status:
+          type: string
+          enum: [healthy, unhealthy]
+          description: 服务健康状态
+        service:
+          type: string
+          description: 服务名称
+        version:
+          type: string
+          description: 服务版本
+        timestamp:
+          type: string
+          format: date-time
+          description: 响应时间戳
+        environment:
+          type: string
+          description: 部署环境
+        deployment:
+          type: string
+          description: 部署类型
+
+    ServiceInfoResponse:
+      type: object
+      required:
+        - service
+        - version
+        - deployment
+        - namespace
+        - internal_url
+      properties:
+        service:
+          type: string
+          description: 服务名称
+        version:
+          type: string
+          description: 服务版本
+        deployment:
+          type: string
+          description: 部署类型
+        namespace:
+          type: string
+          description: K8s命名空间
+        internal_url:
+          type: string
+          format: uri
+          description: 内网访问URL
+        features:
+          type: array
+          items:
+            type: string
+          description: 服务特性列表
+        endpoints:
+          type: array
+          items:
+            type: string
+          description: 可用端点列表
+
+    AgentHealthResponse:
+      type: object
+      required:
+        - status
+        - message
+        - agent_available
+      properties:
+        status:
+          type: string
+          enum: [healthy, unhealthy]
+          description: Agent健康状态
+        message:
+          type: string
+          description: 状态描述信息
+        agent_available:
+          type: boolean
+          description: Agent是否可用
+        note:
+          type: string
+          description: 备注信息
+
+    DesignRequest:
+      type: object
+      required:
+        - requirement
+      properties:
+        requirement:
+          type: string
+          description: 设计需求描述
+          example: "创建一个用户管理页面"
+        style:
+          type: string
+          description: 设计风格
+          default: "现代简约"
+          example: "现代简约"
+
+    DesignResponse:
+      type: object
+      required:
+        - status
+        - success
+        - message
+      properties:
+        status:
+          type: string
+          enum: [success, error]
+          description: 处理状态
+        success:
+          type: boolean
+          description: 是否成功
+        message:
+          type: string
+          description: 处理结果消息
+        prototype_url:
+          type: string
+          format: uri
+          description: 原型访问URL
+        internal_domain:
+          type: string
+          description: 内网域名
+        features:
+          type: array
+          items:
+            type: string
+          description: 支持的特性
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: 错误类型
+        message:
+          type: string
+          description: 错误描述
+        code:
+          type: integer
+          description: 错误代码
+        timestamp:
+          type: string
+          format: date-time
+          description: 错误发生时间
+
+tags:
+  - name: 监控
+    description: 健康检查和监控相关接口
+  - name: 服务信息
+    description: 服务发现和信息查询接口
+  - name: Agent
+    description: AI Agent相关接口
+  - name: 原型设计
+    description: 原型设计功能接口

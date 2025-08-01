@@ -1,0 +1,100 @@
+# Deployment配置 - AI Agent Web Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-service
+  namespace: ai-agents
+  labels:
+    app: ai-agent-web-service
+    component: web-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ai-agent-web-service
+      component: web-service
+  template:
+    metadata:
+      labels:
+        app: ai-agent-web-service
+        component: web-service
+    spec:
+      containers:
+      - name: web-service
+        image: ai-agent-web-service:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8000
+          name: http
+          protocol: TCP
+        
+        # 环境变量配置
+        envFrom:
+        - configMapRef:
+            name: web-service-config
+        - configMapRef:
+            name: web-service-env
+        - secretRef:
+            name: web-service-secrets
+        
+        # 资源限制
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        
+        # 健康检查
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        
+        # 启动探针
+        startupProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 30
+        
+        # 挂载卷
+        volumeMounts:
+        - name: prototype-outputs
+          mountPath: /app/agent-frameworks/langgraph/prototype_design/outputs
+        - name: tmp
+          mountPath: /tmp
+      
+      # 卷配置
+      volumes:
+      - name: prototype-outputs
+        emptyDir: {}
+      - name: tmp
+        emptyDir: {}
+      
+      # 安全上下文
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      
+      # 重启策略
+      restartPolicy: Always

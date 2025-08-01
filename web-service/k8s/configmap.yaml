@@ -1,0 +1,52 @@
+# ConfigMap配置 - 应用配置
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: web-service-config
+  namespace: ai-agents
+  labels:
+    app: ai-agent-web-service
+data:
+  # 应用配置
+  APP_NAME: "AI Agent Web Service"
+  VERSION: "1.0.0"
+  DEBUG: "false"
+  
+  # 服务器配置
+  HOST: "0.0.0.0"
+  PORT: "8000"
+  
+  # CORS配置
+  ALLOWED_HOSTS: '["*"]'
+  
+  # 日志配置
+  LOG_LEVEL: "INFO"
+  LOG_FORMAT: "json"
+  
+  # Agent框架路径配置（容器内路径）
+  AGENT_FRAMEWORKS_PATH: "/app/agent-frameworks"
+  LANGGRAPH_PATH: "/app/agent-frameworks/langgraph"
+  
+  # Agent执行配置
+  AGENT_TIMEOUT: "300"
+  MAX_CONCURRENT_AGENTS: "10"
+  
+  # Playwright配置
+  PLAYWRIGHT_BROWSERS_PATH: "/app/playwright-browsers"
+---
+# ConfigMap配置 - 环境变量
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: web-service-env
+  namespace: ai-agents
+  labels:
+    app: ai-agent-web-service
+data:
+  # Python环境配置
+  PYTHONPATH: "/app"
+  PYTHONUNBUFFERED: "1"
+  
+  # 服务发现配置
+  WEB_SERVICE_HOST: "web-service.ai-agents.svc.cluster.local"
+  WEB_SERVICE_PORT: "8000"

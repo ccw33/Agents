@@ -1,0 +1,40 @@
+# Service配置 - 内网服务发现
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-service
+  namespace: ai-agents
+  labels:
+    app: ai-agent-web-service
+    component: web-service
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8000
+    targetPort: 8000
+    protocol: TCP
+    name: http
+  selector:
+    app: ai-agent-web-service
+    component: web-service
+---
+# Service配置 - NodePort（用于外部访问测试）
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-service-nodeport
+  namespace: ai-agents
+  labels:
+    app: ai-agent-web-service
+    component: web-service-external
+spec:
+  type: NodePort
+  ports:
+  - port: 8000
+    targetPort: 8000
+    nodePort: 30800
+    protocol: TCP
+    name: http
+  selector:
+    app: ai-agent-web-service
+    component: web-service
