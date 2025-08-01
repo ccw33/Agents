@@ -49,4 +49,4 @@ data:
   
   # 服务发现配置
   WEB_SERVICE_HOST: "web-service.ai-agents.svc.cluster.local"
-  WEB_SERVICE_PORT: "8000"
+  WEB_SERVICE_PORT: "80"

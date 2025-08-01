@@ -78,10 +78,10 @@ cd web-service
 ### 1. 内网服务域名（推荐）
 ```bash
 # 集群内服务访问
-http://web-service.ai-agents.svc.cluster.local:8000
+http://web-service.ai-agents.svc.cluster.local
 
 # 简化域名（同命名空间内）
-http://web-service:8000
+http://web-service
 ```
 
 ### 2. NodePort访问
@@ -172,7 +172,7 @@ open http://localhost:8080/docs
 kubectl run test-pod --image=curlimages/curl -i --tty --rm -- sh
 
 # 在测试Pod内执行
-curl http://web-service.ai-agents.svc.cluster.local:8000/health
+curl http://web-service.ai-agents.svc.cluster.local/health
 ```
 
 ## 🗑️ 清理资源
@@ -300,13 +300,13 @@ curl -v http://localhost:8080/health
 **内网域名访问（推荐）：**
 ```bash
 # 完整域名
-http://web-service.ai-agents.svc.cluster.local:8000
+http://web-service.ai-agents.svc.cluster.local
 
 # 简化域名（同命名空间内）
-http://web-service:8000
+http://web-service
 
 # ClusterIP直接访问
-http://<CLUSTER-IP>:8000
+http://<CLUSTER-IP>
 ```
 
 **外部访问：**

@@ -8,20 +8,20 @@
 
 ```bash
 # 完整域名（推荐）
-http://web-service.ai-agents.svc.cluster.local:8000
+http://web-service.ai-agents.svc.cluster.local
 
 # 简化域名（同命名空间内）
-http://web-service:8000
+http://web-service
 
 # ClusterIP直接访问
-http://192.168.194.238:8000
+http://192.168.194.238
 ```
 
 ### 服务信息
 
 - **服务名称**: `web-service`
 - **命名空间**: `ai-agents`
-- **端口**: `8000`
+- **端口**: `80`（内网访问）/ `8000`（容器端口）
 - **协议**: `HTTP`
 - **副本数**: `2`（负载均衡）
 
@@ -44,7 +44,7 @@ http://192.168.194.238:8000
 
 **请求示例**:
 ```bash
-curl http://web-service.ai-agents.svc.cluster.local:8000/health
+curl http://web-service.ai-agents.svc.cluster.local/health
 ```
 
 **响应示例**:
@@ -75,7 +75,7 @@ curl http://web-service.ai-agents.svc.cluster.local:8000/health
 
 **请求示例**:
 ```bash
-curl http://web-service.ai-agents.svc.cluster.local:8000/api/v1/info
+curl http://web-service.ai-agents.svc.cluster.local/api/v1/info
 ```
 
 **响应示例**:
@@ -85,7 +85,7 @@ curl http://web-service.ai-agents.svc.cluster.local:8000/api/v1/info
     "version": "1.0.0",
     "deployment": "kubernetes",
     "namespace": "ai-agents",
-    "internal_url": "http://web-service.ai-agents.svc.cluster.local:8000",
+    "internal_url": "http://web-service.ai-agents.svc.cluster.local",
     "features": [
         "内网域名访问",
         "服务发现",
@@ -110,7 +110,7 @@ curl http://web-service.ai-agents.svc.cluster.local:8000/api/v1/info
 
 **请求示例**:
 ```bash
-curl http://web-service.ai-agents.svc.cluster.local:8000/api/v1/prototype_design/health
+curl http://web-service.ai-agents.svc.cluster.local/api/v1/prototype_design/health
 ```
 
 **响应示例**:
@@ -132,7 +132,7 @@ curl http://web-service.ai-agents.svc.cluster.local:8000/api/v1/prototype_design
 **请求示例**:
 ```bash
 curl -X POST \
-  http://web-service.ai-agents.svc.cluster.local:8000/api/v1/prototype_design/design \
+  http://web-service.ai-agents.svc.cluster.local/api/v1/prototype_design/design \
   -H "Content-Type: application/json" \
   -d '{
     "requirement": "创建一个用户管理页面",
@@ -146,7 +146,7 @@ curl -X POST \
     "status": "success",
     "success": true,
     "message": "AI Agent Web Service 在Kubernetes中运行",
-    "prototype_url": "http://web-service.ai-agents.svc.cluster.local:8000/health",
+    "prototype_url": "http://web-service.ai-agents.svc.cluster.local/health",
     "internal_domain": "web-service.ai-agents.svc.cluster.local",
     "features": ["内网域名访问", "服务发现", "负载均衡"]
 }
@@ -161,7 +161,7 @@ import requests
 import json
 
 class AIAgentClient:
-    def __init__(self, base_url="http://web-service.ai-agents.svc.cluster.local:8000"):
+    def __init__(self, base_url="http://web-service.ai-agents.svc.cluster.local"):
         self.base_url = base_url
         self.session = requests.Session()
     
@@ -244,7 +244,7 @@ type DesignResponse struct {
 
 func NewAIAgentClient() *AIAgentClient {
     return &AIAgentClient{
-        BaseURL: "http://web-service.ai-agents.svc.cluster.local:8000",
+        BaseURL: "http://web-service.ai-agents.svc.cluster.local",
         Client:  &http.Client{},
     }
 }
@@ -314,7 +314,7 @@ func main() {
 const axios = require('axios');
 
 class AIAgentClient {
-    constructor(baseURL = 'http://web-service.ai-agents.svc.cluster.local:8000') {
+    constructor(baseURL = 'http://web-service.ai-agents.svc.cluster.local') {
         this.baseURL = baseURL;
         this.client = axios.create({
             baseURL: this.baseURL,
