@@ -1,0 +1,354 @@
+# Deployment配置模板
+# 用法：将 {{}} 占位符替换为实际值
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{APP_NAME}}
+  namespace: {{NAMESPACE_NAME}}
+  labels:
+    app: {{APP_NAME}}
+    component: {{COMPONENT_NAME}}
+    version: {{VERSION}}
+    environment: {{ENVIRONMENT}}
+  annotations:
+    description: "{{DESCRIPTION}}"
+    deployment.kubernetes.io/revision: "{{REVISION}}"
+spec:
+  replicas: {{REPLICAS}}  # 副本数量，建议生产环境至少2个
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: {{APP_NAME}}
+      component: {{COMPONENT_NAME}}
+  template:
+    metadata:
+      labels:
+        app: {{APP_NAME}}
+        component: {{COMPONENT_NAME}}
+        version: {{VERSION}}
+      annotations:
+        # Pod重启时间戳，用于强制重启
+        kubectl.kubernetes.io/restartedAt: "{{RESTART_TIMESTAMP}}"
+    spec:
+      # 服务账号（如果需要访问K8s API）
+      serviceAccountName: {{SERVICE_ACCOUNT_NAME}}
+      
+      # 镜像拉取密钥（如果使用私有镜像仓库）
+      imagePullSecrets:
+      - name: {{APP_NAME}}-registry
+      
+      # 容器配置
+      containers:
+      - name: {{CONTAINER_NAME}}
+        image: {{IMAGE_NAME}}:{{IMAGE_TAG}}
+        imagePullPolicy: {{IMAGE_PULL_POLICY}}  # Always, IfNotPresent, Never
+        
+        # 端口配置
+        ports:
+        - containerPort: {{CONTAINER_PORT}}
+          name: http
+          protocol: TCP
+        # 如果有其他端口（如metrics端口）
+        - containerPort: {{METRICS_PORT}}
+          name: metrics
+          protocol: TCP
+        
+        # 环境变量配置
+        envFrom:
+        - configMapRef:
+            name: {{APP_NAME}}-config
+        - configMapRef:
+            name: {{APP_NAME}}-env
+        - secretRef:
+            name: {{APP_NAME}}-secrets
+        
+        # 单独的环境变量
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        
+        # 资源限制
+        resources:
+          requests:
+            memory: "{{MEMORY_REQUEST}}"  # 如：512Mi
+            cpu: "{{CPU_REQUEST}}"       # 如：250m
+          limits:
+            memory: "{{MEMORY_LIMIT}}"   # 如：2Gi
+            cpu: "{{CPU_LIMIT}}"         # 如：1000m
+        
+        # 健康检查 - 存活探针
+        livenessProbe:
+          httpGet:
+            path: {{HEALTH_CHECK_PATH}}  # 如：/health, /healthz
+            port: {{CONTAINER_PORT}}
+            scheme: HTTP
+          initialDelaySeconds: {{LIVENESS_INITIAL_DELAY}}  # 如：30
+          periodSeconds: {{LIVENESS_PERIOD}}               # 如：30
+          timeoutSeconds: {{LIVENESS_TIMEOUT}}             # 如：10
+          failureThreshold: {{LIVENESS_FAILURE_THRESHOLD}} # 如：3
+          successThreshold: 1
+        
+        # 健康检查 - 就绪探针
+        readinessProbe:
+          httpGet:
+            path: {{READINESS_CHECK_PATH}}  # 如：/ready, /health
+            port: {{CONTAINER_PORT}}
+            scheme: HTTP
+          initialDelaySeconds: {{READINESS_INITIAL_DELAY}}  # 如：10
+          periodSeconds: {{READINESS_PERIOD}}               # 如：10
+          timeoutSeconds: {{READINESS_TIMEOUT}}             # 如：5
+          failureThreshold: {{READINESS_FAILURE_THRESHOLD}} # 如：3
+          successThreshold: 1
+        
+        # 启动探针（用于慢启动应用）
+        startupProbe:
+          httpGet:
+            path: {{STARTUP_CHECK_PATH}}  # 如：/health
+            port: {{CONTAINER_PORT}}
+            scheme: HTTP
+          initialDelaySeconds: {{STARTUP_INITIAL_DELAY}}  # 如：10
+          periodSeconds: {{STARTUP_PERIOD}}               # 如：10
+          timeoutSeconds: {{STARTUP_TIMEOUT}}             # 如：5
+          failureThreshold: {{STARTUP_FAILURE_THRESHOLD}} # 如：30
+          successThreshold: 1
+        
+        # 生命周期钩子
+        lifecycle:
+          preStop:
+            exec:
+              command:
+              - /bin/sh
+              - -c
+              - "{{PRESTOP_COMMAND}}"  # 如：sleep 15
+        
+        # 卷挂载
+        volumeMounts:
+        - name: {{VOLUME_NAME}}
+          mountPath: {{MOUNT_PATH}}
+          readOnly: {{READ_ONLY}}  # true, false
+        - name: config-files
+          mountPath: /etc/config
+          readOnly: true
+        - name: secrets
+          mountPath: /etc/secrets
+          readOnly: true
+        - name: tmp
+          mountPath: /tmp
+        - name: logs
+          mountPath: /var/log
+        
+        # 安全上下文
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: {{RUN_AS_USER}}    # 如：1000
+          runAsGroup: {{RUN_AS_GROUP}}  # 如：1000
+          readOnlyRootFilesystem: {{READ_ONLY_ROOT_FS}}  # true, false
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+            add:
+            - NET_BIND_SERVICE  # 如果需要绑定特权端口
+      
+      # 初始化容器（如果需要）
+      initContainers:
+      - name: {{INIT_CONTAINER_NAME}}
+        image: {{INIT_IMAGE_NAME}}:{{INIT_IMAGE_TAG}}
+        command:
+        - /bin/sh
+        - -c
+        - "{{INIT_COMMAND}}"  # 如：数据库迁移、文件准备等
+        env:
+        - name: DB_HOST
+          value: "{{DB_HOST}}"
+        volumeMounts:
+        - name: init-data
+          mountPath: /data
+      
+      # 卷配置
+      volumes:
+      # EmptyDir卷（临时存储）
+      - name: tmp
+        emptyDir: {}
+      - name: logs
+        emptyDir: {}
+      
+      # ConfigMap卷
+      - name: config-files
+        configMap:
+          name: {{APP_NAME}}-files
+          defaultMode: 0644
+      
+      # Secret卷
+      - name: secrets
+        secret:
+          secretName: {{APP_NAME}}-secrets
+          defaultMode: 0600
+      
+      # PersistentVolumeClaim卷（持久存储）
+      - name: {{VOLUME_NAME}}
+        persistentVolumeClaim:
+          claimName: {{PVC_NAME}}
+      
+      # HostPath卷（挂载主机路径，谨慎使用）
+      - name: host-data
+        hostPath:
+          path: {{HOST_PATH}}
+          type: {{HOST_PATH_TYPE}}  # Directory, File, Socket等
+      
+      # 节点选择器
+      nodeSelector:
+        {{NODE_SELECTOR_KEY}}: {{NODE_SELECTOR_VALUE}}  # 如：disktype: ssd
+      
+      # 容忍度（允许调度到有污点的节点）
+      tolerations:
+      - key: {{TOLERATION_KEY}}
+        operator: Equal
+        value: {{TOLERATION_VALUE}}
+        effect: NoSchedule
+      
+      # 亲和性配置
+      affinity:
+        # Pod反亲和性（避免多个副本调度到同一节点）
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - {{APP_NAME}}
+              topologyKey: kubernetes.io/hostname
+        
+        # 节点亲和性
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: {{NODE_AFFINITY_KEY}}
+                operator: In
+                values:
+                - {{NODE_AFFINITY_VALUE}}
+      
+      # Pod安全上下文
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: {{POD_RUN_AS_USER}}    # 如：1000
+        runAsGroup: {{POD_RUN_AS_GROUP}}  # 如：1000
+        fsGroup: {{FS_GROUP}}             # 如：1000
+        seccompProfile:
+          type: RuntimeDefault
+      
+      # DNS配置
+      dnsPolicy: ClusterFirst
+      dnsConfig:
+        options:
+        - name: ndots
+          value: "2"
+        - name: edns0
+      
+      # 重启策略
+      restartPolicy: Always
+      
+      # 终止宽限期（秒）
+      terminationGracePeriodSeconds: {{TERMINATION_GRACE_PERIOD}}  # 如：30
+      
+      # 主机网络（谨慎使用）
+      hostNetwork: false
+      hostPID: false
+      hostIPC: false
+
+---
+# HorizontalPodAutoscaler配置模板 - 自动扩缩容
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{APP_NAME}}-hpa
+  namespace: {{NAMESPACE_NAME}}
+  labels:
+    app: {{APP_NAME}}
+    component: autoscaler
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{APP_NAME}}
+  minReplicas: {{MIN_REPLICAS}}  # 如：2
+  maxReplicas: {{MAX_REPLICAS}}  # 如：10
+  metrics:
+  # CPU使用率
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: {{CPU_TARGET_PERCENTAGE}}  # 如：70
+  # 内存使用率
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: {{MEMORY_TARGET_PERCENTAGE}}  # 如：80
+  # 自定义指标（如果需要）
+  - type: Pods
+    pods:
+      metric:
+        name: {{CUSTOM_METRIC_NAME}}  # 如：requests_per_second
+      target:
+        type: AverageValue
+        averageValue: {{CUSTOM_METRIC_TARGET}}  # 如：1k
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 10
+        periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Percent
+        value: 50
+        periodSeconds: 60
+
+---
+# PodDisruptionBudget配置模板 - 中断预算
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{APP_NAME}}-pdb
+  namespace: {{NAMESPACE_NAME}}
+  labels:
+    app: {{APP_NAME}}
+    component: disruption-budget
+spec:
+  selector:
+    matchLabels:
+      app: {{APP_NAME}}
+      component: {{COMPONENT_NAME}}
+  # 最少可用Pod数量或百分比
+  minAvailable: {{MIN_AVAILABLE}}  # 如：1 或 50%
+  # 或者最多不可用Pod数量或百分比
+  # maxUnavailable: {{MAX_UNAVAILABLE}}  # 如：1 或 25%

@@ -1,0 +1,284 @@
+# Ingress配置模板 - 基础HTTP访问
+# 用法：将 {{}} 占位符替换为实际值
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{INGRESS_NAME}}
+  namespace: {{NAMESPACE_NAME}}
+  labels:
+    app: {{APP_NAME}}
+    component: ingress
+    version: {{VERSION}}
+  annotations:
+    # Nginx Ingress Controller注解
+    nginx.ingress.kubernetes.io/rewrite-target: "{{REWRITE_TARGET}}"  # 如：/, /$1
+    nginx.ingress.kubernetes.io/ssl-redirect: "{{SSL_REDIRECT}}"      # true, false
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "{{FORCE_SSL}}"   # true, false
+    
+    # CORS配置
+    nginx.ingress.kubernetes.io/cors-allow-origin: "{{CORS_ORIGINS}}"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "{{CORS_METHODS}}"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "{{CORS_HEADERS}}"
+    nginx.ingress.kubernetes.io/cors-allow-credentials: "{{CORS_CREDENTIALS}}"
+    
+    # 速率限制
+    nginx.ingress.kubernetes.io/rate-limit: "{{RATE_LIMIT}}"          # 如：100
+    nginx.ingress.kubernetes.io/rate-limit-window: "{{RATE_WINDOW}}"  # 如：1m
+    
+    # 代理配置
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "{{PROXY_CONNECT_TIMEOUT}}"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "{{PROXY_SEND_TIMEOUT}}"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "{{PROXY_READ_TIMEOUT}}"
+    nginx.ingress.kubernetes.io/proxy-body-size: "{{PROXY_BODY_SIZE}}"  # 如：1m, 10m
+    
+    # 认证配置
+    nginx.ingress.kubernetes.io/auth-type: "{{AUTH_TYPE}}"            # basic, digest
+    nginx.ingress.kubernetes.io/auth-secret: "{{AUTH_SECRET}}"
+    nginx.ingress.kubernetes.io/auth-realm: "{{AUTH_REALM}}"
+    
+    # 白名单
+    nginx.ingress.kubernetes.io/whitelist-source-range: "{{WHITELIST_CIDRS}}"
+    
+    # 自定义配置
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      {{CUSTOM_NGINX_CONFIG}}
+spec:
+  ingressClassName: {{INGRESS_CLASS}}  # nginx, traefik, istio等
+  rules:
+  - host: {{DOMAIN_NAME}}
+    http:
+      paths:
+      - path: {{PATH}}              # 如：/, /api, /app
+        pathType: {{PATH_TYPE}}     # Prefix, Exact, ImplementationSpecific
+        backend:
+          service:
+            name: {{SERVICE_NAME}}
+            port:
+              number: {{SERVICE_PORT}}
+
+---
+# Ingress配置模板 - HTTPS/TLS访问
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{INGRESS_NAME}}-tls
+  namespace: {{NAMESPACE_NAME}}
+  labels:
+    app: {{APP_NAME}}
+    component: ingress-tls
+    version: {{VERSION}}
+  annotations:
+    # TLS相关注解
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    
+    # 证书管理器注解（cert-manager）
+    cert-manager.io/cluster-issuer: "{{CERT_ISSUER}}"  # letsencrypt-prod, letsencrypt-staging
+    cert-manager.io/acme-challenge-type: "{{ACME_CHALLENGE}}"  # http01, dns01
+    
+    # SSL配置
+    nginx.ingress.kubernetes.io/ssl-protocols: "{{SSL_PROTOCOLS}}"    # TLSv1.2 TLSv1.3
+    nginx.ingress.kubernetes.io/ssl-ciphers: "{{SSL_CIPHERS}}"
+    nginx.ingress.kubernetes.io/ssl-prefer-server-ciphers: "{{SSL_PREFER_SERVER}}"
+spec:
+  ingressClassName: {{INGRESS_CLASS}}
+  tls:
+  - hosts:
+    - {{DOMAIN_NAME}}
+    secretName: {{TLS_SECRET_NAME}}  # 包含TLS证书的Secret
+  rules:
+  - host: {{DOMAIN_NAME}}
+    http:
+      paths:
+      - path: {{PATH}}
+        pathType: {{PATH_TYPE}}
+        backend:
+          service:
+            name: {{SERVICE_NAME}}
+            port:
+              number: {{SERVICE_PORT}}
+
+---
+# Ingress配置模板 - 多域名多路径
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{INGRESS_NAME}}-multi
+  namespace: {{NAMESPACE_NAME}}
+  labels:
+    app: {{APP_NAME}}
+    component: ingress-multi
+    version: {{VERSION}}
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+    nginx.ingress.kubernetes.io/use-regex: "true"
+spec:
+  ingressClassName: {{INGRESS_CLASS}}
+  tls:
+  - hosts:
+    - {{DOMAIN_1}}
+    - {{DOMAIN_2}}
+    secretName: {{TLS_SECRET_NAME}}
+  rules:
+  # 第一个域名
+  - host: {{DOMAIN_1}}
+    http:
+      paths:
+      # API路径
+      - path: /api/(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: {{API_SERVICE_NAME}}
+            port:
+              number: {{API_SERVICE_PORT}}
+      # Web应用路径
+      - path: /(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: {{WEB_SERVICE_NAME}}
+            port:
+              number: {{WEB_SERVICE_PORT}}
+  
+  # 第二个域名
+  - host: {{DOMAIN_2}}
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ADMIN_SERVICE_NAME}}
+            port:
+              number: {{ADMIN_SERVICE_PORT}}
+
+---
+# Ingress配置模板 - 基于路径的路由
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{INGRESS_NAME}}-path-based
+  namespace: {{NAMESPACE_NAME}}
+  labels:
+    app: {{APP_NAME}}
+    component: ingress-path
+    version: {{VERSION}}
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/use-regex: "true"
+spec:
+  ingressClassName: {{INGRESS_CLASS}}
+  rules:
+  - host: {{DOMAIN_NAME}}
+    http:
+      paths:
+      # 前端应用
+      - path: /app(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: {{FRONTEND_SERVICE}}
+            port:
+              number: 80
+      
+      # API服务
+      - path: /api(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: {{API_SERVICE}}
+            port:
+              number: 80
+      
+      # 管理界面
+      - path: /admin(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: {{ADMIN_SERVICE}}
+            port:
+              number: 80
+      
+      # 静态资源
+      - path: /static(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: {{STATIC_SERVICE}}
+            port:
+              number: 80
+
+---
+# Ingress配置模板 - 带认证的访问
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{INGRESS_NAME}}-auth
+  namespace: {{NAMESPACE_NAME}}
+  labels:
+    app: {{APP_NAME}}
+    component: ingress-auth
+    version: {{VERSION}}
+  annotations:
+    # 基础认证
+    nginx.ingress.kubernetes.io/auth-type: basic
+    nginx.ingress.kubernetes.io/auth-secret: {{AUTH_SECRET_NAME}}
+    nginx.ingress.kubernetes.io/auth-realm: "{{AUTH_REALM}}"
+    
+    # OAuth认证（如果使用oauth2-proxy）
+    nginx.ingress.kubernetes.io/auth-url: "{{OAUTH_AUTH_URL}}"
+    nginx.ingress.kubernetes.io/auth-signin: "{{OAUTH_SIGNIN_URL}}"
+    nginx.ingress.kubernetes.io/auth-response-headers: "{{OAUTH_HEADERS}}"
+spec:
+  ingressClassName: {{INGRESS_CLASS}}
+  tls:
+  - hosts:
+    - {{DOMAIN_NAME}}
+    secretName: {{TLS_SECRET_NAME}}
+  rules:
+  - host: {{DOMAIN_NAME}}
+    http:
+      paths:
+      - path: {{PATH}}
+        pathType: {{PATH_TYPE}}
+        backend:
+          service:
+            name: {{SERVICE_NAME}}
+            port:
+              number: {{SERVICE_PORT}}
+
+---
+# Ingress配置模板 - 金丝雀部署
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{INGRESS_NAME}}-canary
+  namespace: {{NAMESPACE_NAME}}
+  labels:
+    app: {{APP_NAME}}
+    component: ingress-canary
+    version: {{CANARY_VERSION}}
+  annotations:
+    # 金丝雀部署注解
+    nginx.ingress.kubernetes.io/canary: "true"
+    nginx.ingress.kubernetes.io/canary-weight: "{{CANARY_WEIGHT}}"  # 如：10（10%流量）
+    # 或基于请求头
+    nginx.ingress.kubernetes.io/canary-by-header: "{{CANARY_HEADER}}"
+    nginx.ingress.kubernetes.io/canary-by-header-value: "{{CANARY_HEADER_VALUE}}"
+    # 或基于Cookie
+    nginx.ingress.kubernetes.io/canary-by-cookie: "{{CANARY_COOKIE}}"
+spec:
+  ingressClassName: {{INGRESS_CLASS}}
+  rules:
+  - host: {{DOMAIN_NAME}}
+    http:
+      paths:
+      - path: {{PATH}}
+        pathType: {{PATH_TYPE}}
+        backend:
+          service:
+            name: {{CANARY_SERVICE_NAME}}
+            port:
+              number: {{SERVICE_PORT}}

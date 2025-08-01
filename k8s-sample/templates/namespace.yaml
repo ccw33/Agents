@@ -1,0 +1,99 @@
+# Kubernetes命名空间配置模板
+# 用法：将 {{NAMESPACE_NAME}} 和 {{APP_NAME}} 替换为实际值
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{NAMESPACE_NAME}}
+  labels:
+    name: {{NAMESPACE_NAME}}
+    app: {{APP_NAME}}
+    environment: {{ENVIRONMENT}}  # 如：development, staging, production
+    team: {{TEAM_NAME}}           # 如：backend, frontend, devops
+  annotations:
+    description: "{{DESCRIPTION}}"
+    created-by: "{{CREATED_BY}}"
+    contact: "{{CONTACT_EMAIL}}"
+
+---
+# 可选：网络策略 - 限制命名空间间的网络访问
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{NAMESPACE_NAME}}-default-deny
+  namespace: {{NAMESPACE_NAME}}
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+  egress:
+  # 允许DNS查询
+  - to: []
+    ports:
+    - protocol: UDP
+      port: 53
+  # 允许访问Kubernetes API
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: kube-system
+    ports:
+    - protocol: TCP
+      port: 443
+
+---
+# 可选：资源配额 - 限制命名空间资源使用
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: {{NAMESPACE_NAME}}-quota
+  namespace: {{NAMESPACE_NAME}}
+spec:
+  hard:
+    # Pod数量限制
+    pods: "10"
+    # CPU和内存限制
+    requests.cpu: "4"
+    requests.memory: 8Gi
+    limits.cpu: "8"
+    limits.memory: 16Gi
+    # 存储限制
+    persistentvolumeclaims: "4"
+    requests.storage: 100Gi
+    # 服务数量限制
+    services: "5"
+    services.nodeports: "2"
+    services.loadbalancers: "1"
+
+---
+# 可选：限制范围 - 设置Pod和容器的默认资源限制
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: {{NAMESPACE_NAME}}-limits
+  namespace: {{NAMESPACE_NAME}}
+spec:
+  limits:
+  # 容器默认限制
+  - default:
+      cpu: 500m
+      memory: 512Mi
+    defaultRequest:
+      cpu: 100m
+      memory: 128Mi
+    type: Container
+  # Pod限制
+  - max:
+      cpu: "2"
+      memory: 4Gi
+    min:
+      cpu: 50m
+      memory: 64Mi
+    type: Pod
+  # PVC限制
+  - max:
+      storage: 50Gi
+    min:
+      storage: 1Gi
+    type: PersistentVolumeClaim

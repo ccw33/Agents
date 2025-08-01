@@ -1,0 +1,245 @@
+# Service配置模板 - ClusterIP（集群内网访问）
+# 用法：将 {{}} 占位符替换为实际值
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{SERVICE_NAME}}
+  namespace: {{NAMESPACE_NAME}}
+  labels:
+    app: {{APP_NAME}}
+    component: {{COMPONENT_NAME}}
+    version: {{VERSION}}
+    service-type: clusterip
+  annotations:
+    description: "{{DESCRIPTION}}"
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"  # AWS特定注解
+spec:
+  type: ClusterIP
+  # 可选：指定ClusterIP（通常让K8s自动分配）
+  # clusterIP: {{CLUSTER_IP}}
+  ports:
+  - port: {{SERVICE_PORT}}        # 服务端口（推荐使用80/443）
+    targetPort: {{TARGET_PORT}}   # 容器端口
+    protocol: TCP
+    name: http
+  # 如果有HTTPS端口
+  - port: 443
+    targetPort: {{HTTPS_TARGET_PORT}}
+    protocol: TCP
+    name: https
+  # 如果有metrics端口
+  - port: {{METRICS_PORT}}
+    targetPort: {{METRICS_TARGET_PORT}}
+    protocol: TCP
+    name: metrics
+  selector:
+    app: {{APP_NAME}}
+    component: {{COMPONENT_NAME}}
+  # 会话亲和性（可选）
+  sessionAffinity: {{SESSION_AFFINITY}}  # None, ClientIP
+
+---
+# Service配置模板 - NodePort（外部访问测试）
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{SERVICE_NAME}}-nodeport
+  namespace: {{NAMESPACE_NAME}}
+  labels:
+    app: {{APP_NAME}}
+    component: {{COMPONENT_NAME}}-external
+    version: {{VERSION}}
+    service-type: nodeport
+  annotations:
+    description: "外部访问测试服务"
+spec:
+  type: NodePort
+  ports:
+  - port: {{SERVICE_PORT}}
+    targetPort: {{TARGET_PORT}}
+    nodePort: {{NODE_PORT}}      # 30000-32767范围内
+    protocol: TCP
+    name: http
+  selector:
+    app: {{APP_NAME}}
+    component: {{COMPONENT_NAME}}
+
+---
+# Service配置模板 - LoadBalancer（云环境外部访问）
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{SERVICE_NAME}}-lb
+  namespace: {{NAMESPACE_NAME}}
+  labels:
+    app: {{APP_NAME}}
+    component: {{COMPONENT_NAME}}-loadbalancer
+    version: {{VERSION}}
+    service-type: loadbalancer
+  annotations:
+    description: "负载均衡器服务"
+    # AWS LoadBalancer注解
+    service.beta.kubernetes.io/aws-load-balancer-type: "{{AWS_LB_TYPE}}"  # nlb, elb
+    service.beta.kubernetes.io/aws-load-balancer-scheme: "{{AWS_LB_SCHEME}}"  # internet-facing, internal
+    service.beta.kubernetes.io/aws-load-balancer-ssl-cert: "{{AWS_SSL_CERT_ARN}}"
+    # GCP LoadBalancer注解
+    cloud.google.com/load-balancer-type: "{{GCP_LB_TYPE}}"  # Internal, External
+    # Azure LoadBalancer注解
+    service.beta.kubernetes.io/azure-load-balancer-internal: "{{AZURE_INTERNAL}}"  # true, false
+spec:
+  type: LoadBalancer
+  # 可选：指定外部IP
+  # loadBalancerIP: {{LOAD_BALANCER_IP}}
+  # 可选：限制访问来源
+  loadBalancerSourceRanges:
+  - {{ALLOWED_CIDR_1}}  # 如：10.0.0.0/8
+  - {{ALLOWED_CIDR_2}}  # 如：192.168.0.0/16
+  ports:
+  - port: {{SERVICE_PORT}}
+    targetPort: {{TARGET_PORT}}
+    protocol: TCP
+    name: http
+  - port: 443
+    targetPort: {{HTTPS_TARGET_PORT}}
+    protocol: TCP
+    name: https
+  selector:
+    app: {{APP_NAME}}
+    component: {{COMPONENT_NAME}}
+
+---
+# Service配置模板 - ExternalName（外部服务映射）
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{EXTERNAL_SERVICE_NAME}}
+  namespace: {{NAMESPACE_NAME}}
+  labels:
+    app: {{APP_NAME}}
+    component: external-service
+    service-type: externalname
+  annotations:
+    description: "外部服务映射"
+spec:
+  type: ExternalName
+  externalName: {{EXTERNAL_FQDN}}  # 如：database.example.com
+  ports:
+  - port: {{EXTERNAL_PORT}}
+    protocol: TCP
+    name: {{EXTERNAL_PROTOCOL}}
+
+---
+# Service配置模板 - Headless Service（无头服务）
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{SERVICE_NAME}}-headless
+  namespace: {{NAMESPACE_NAME}}
+  labels:
+    app: {{APP_NAME}}
+    component: {{COMPONENT_NAME}}-headless
+    version: {{VERSION}}
+    service-type: headless
+  annotations:
+    description: "无头服务，用于StatefulSet"
+spec:
+  type: ClusterIP
+  clusterIP: None  # 无头服务
+  ports:
+  - port: {{SERVICE_PORT}}
+    targetPort: {{TARGET_PORT}}
+    protocol: TCP
+    name: http
+  selector:
+    app: {{APP_NAME}}
+    component: {{COMPONENT_NAME}}
+  # 发布策略
+  publishNotReadyAddresses: true
+
+---
+# Endpoints配置模板 - 手动管理端点（高级用法）
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: {{SERVICE_NAME}}-manual
+  namespace: {{NAMESPACE_NAME}}
+  labels:
+    app: {{APP_NAME}}
+    component: manual-endpoints
+subsets:
+- addresses:
+  - ip: {{ENDPOINT_IP_1}}
+    hostname: {{ENDPOINT_HOSTNAME_1}}
+  - ip: {{ENDPOINT_IP_2}}
+    hostname: {{ENDPOINT_HOSTNAME_2}}
+  ports:
+  - port: {{ENDPOINT_PORT}}
+    protocol: TCP
+    name: http
+
+---
+# Service配置模板 - 多端口服务
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{SERVICE_NAME}}-multiport
+  namespace: {{NAMESPACE_NAME}}
+  labels:
+    app: {{APP_NAME}}
+    component: {{COMPONENT_NAME}}-multiport
+    version: {{VERSION}}
+    service-type: multiport
+spec:
+  type: ClusterIP
+  ports:
+  # HTTP端口
+  - port: 80
+    targetPort: {{HTTP_TARGET_PORT}}
+    protocol: TCP
+    name: http
+  # HTTPS端口
+  - port: 443
+    targetPort: {{HTTPS_TARGET_PORT}}
+    protocol: TCP
+    name: https
+  # gRPC端口
+  - port: {{GRPC_PORT}}
+    targetPort: {{GRPC_TARGET_PORT}}
+    protocol: TCP
+    name: grpc
+  # Metrics端口
+  - port: {{METRICS_PORT}}
+    targetPort: {{METRICS_TARGET_PORT}}
+    protocol: TCP
+    name: metrics
+  # 管理端口
+  - port: {{ADMIN_PORT}}
+    targetPort: {{ADMIN_TARGET_PORT}}
+    protocol: TCP
+    name: admin
+  selector:
+    app: {{APP_NAME}}
+    component: {{COMPONENT_NAME}}
+
+---
+# ServiceMonitor配置模板 - Prometheus监控（如果使用Prometheus Operator）
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{SERVICE_NAME}}-monitor
+  namespace: {{NAMESPACE_NAME}}
+  labels:
+    app: {{APP_NAME}}
+    component: monitoring
+    release: prometheus  # 匹配Prometheus Operator的标签
+spec:
+  selector:
+    matchLabels:
+      app: {{APP_NAME}}
+      component: {{COMPONENT_NAME}}
+  endpoints:
+  - port: metrics
+    path: {{METRICS_PATH}}  # 如：/metrics
+    interval: {{SCRAPE_INTERVAL}}  # 如：30s
+    scrapeTimeout: {{SCRAPE_TIMEOUT}}  # 如：10s

@@ -1,0 +1,179 @@
+# ConfigMap配置模板 - 应用配置
+# 用法：将 {{}} 占位符替换为实际值
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{APP_NAME}}-config
+  namespace: {{NAMESPACE_NAME}}
+  labels:
+    app: {{APP_NAME}}
+    component: config
+    version: {{VERSION}}
+data:
+  # 基础应用配置
+  APP_NAME: "{{APP_DISPLAY_NAME}}"
+  VERSION: "{{VERSION}}"
+  ENVIRONMENT: "{{ENVIRONMENT}}"  # development, staging, production
+  DEBUG: "{{DEBUG}}"              # true, false
+  
+  # 服务器配置
+  HOST: "{{HOST}}"                # 通常为 0.0.0.0
+  PORT: "{{PORT}}"                # 应用监听端口
+  
+  # 安全配置
+  ALLOWED_HOSTS: '{{ALLOWED_HOSTS}}'  # JSON格式，如：["*"] 或 ["example.com"]
+  CORS_ORIGINS: '{{CORS_ORIGINS}}'    # JSON格式，如：["http://localhost:3000"]
+  
+  # 日志配置
+  LOG_LEVEL: "{{LOG_LEVEL}}"      # DEBUG, INFO, WARNING, ERROR
+  LOG_FORMAT: "{{LOG_FORMAT}}"    # json, text
+  LOG_FILE: "{{LOG_FILE}}"        # 日志文件路径
+  
+  # 数据库配置（如果需要）
+  DB_HOST: "{{DB_HOST}}"
+  DB_PORT: "{{DB_PORT}}"
+  DB_NAME: "{{DB_NAME}}"
+  DB_POOL_SIZE: "{{DB_POOL_SIZE}}"
+  
+  # 缓存配置（如果需要）
+  REDIS_HOST: "{{REDIS_HOST}}"
+  REDIS_PORT: "{{REDIS_PORT}}"
+  REDIS_DB: "{{REDIS_DB}}"
+  
+  # 应用特定配置
+  # 根据具体应用需求添加
+  FEATURE_FLAGS: '{{FEATURE_FLAGS}}'  # JSON格式功能开关
+  MAX_WORKERS: "{{MAX_WORKERS}}"
+  TIMEOUT: "{{TIMEOUT}}"
+  
+  # 文件路径配置
+  DATA_PATH: "{{DATA_PATH}}"
+  UPLOAD_PATH: "{{UPLOAD_PATH}}"
+  TEMP_PATH: "{{TEMP_PATH}}"
+
+---
+# ConfigMap配置模板 - 环境变量
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{APP_NAME}}-env
+  namespace: {{NAMESPACE_NAME}}
+  labels:
+    app: {{APP_NAME}}
+    component: env
+    version: {{VERSION}}
+data:
+  # 运行时环境配置
+  TZ: "{{TIMEZONE}}"              # 如：Asia/Shanghai, UTC
+  LANG: "{{LANGUAGE}}"            # 如：en_US.UTF-8, zh_CN.UTF-8
+  
+  # Python环境配置（如果是Python应用）
+  PYTHONPATH: "{{PYTHONPATH}}"
+  PYTHONUNBUFFERED: "1"
+  PYTHONDONTWRITEBYTECODE: "1"
+  
+  # Node.js环境配置（如果是Node.js应用）
+  NODE_ENV: "{{NODE_ENV}}"        # development, production
+  NODE_OPTIONS: "{{NODE_OPTIONS}}"
+  
+  # Java环境配置（如果是Java应用）
+  JAVA_OPTS: "{{JAVA_OPTS}}"
+  JVM_HEAP_SIZE: "{{JVM_HEAP_SIZE}}"
+  
+  # 服务发现配置
+  SERVICE_HOST: "{{SERVICE_NAME}}.{{NAMESPACE_NAME}}.svc.cluster.local"
+  SERVICE_PORT: "{{SERVICE_PORT}}"
+  
+  # 健康检查配置
+  HEALTH_CHECK_PATH: "{{HEALTH_CHECK_PATH}}"  # 如：/health, /healthz
+  READINESS_CHECK_PATH: "{{READINESS_CHECK_PATH}}"
+  
+  # 监控配置
+  METRICS_ENABLED: "{{METRICS_ENABLED}}"
+  METRICS_PATH: "{{METRICS_PATH}}"    # 如：/metrics
+  METRICS_PORT: "{{METRICS_PORT}}"
+  
+  # 追踪配置
+  TRACING_ENABLED: "{{TRACING_ENABLED}}"
+  JAEGER_ENDPOINT: "{{JAEGER_ENDPOINT}}"
+
+---
+# ConfigMap配置模板 - 配置文件
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{APP_NAME}}-files
+  namespace: {{NAMESPACE_NAME}}
+  labels:
+    app: {{APP_NAME}}
+    component: files
+    version: {{VERSION}}
+data:
+  # 应用配置文件（根据需要添加）
+  app.conf: |
+    # 应用主配置文件
+    [server]
+    host = {{HOST}}
+    port = {{PORT}}
+    
+    [database]
+    host = {{DB_HOST}}
+    port = {{DB_PORT}}
+    name = {{DB_NAME}}
+    
+    [logging]
+    level = {{LOG_LEVEL}}
+    format = {{LOG_FORMAT}}
+  
+  # Nginx配置文件示例（如果需要）
+  nginx.conf: |
+    server {
+        listen 80;
+        server_name {{SERVER_NAME}};
+        
+        location / {
+            proxy_pass http://{{SERVICE_NAME}}:{{SERVICE_PORT}};
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        }
+        
+        location /health {
+            access_log off;
+            return 200 "healthy\n";
+        }
+    }
+  
+  # 日志配置文件示例
+  logging.conf: |
+    [loggers]
+    keys=root
+    
+    [handlers]
+    keys=consoleHandler,fileHandler
+    
+    [formatters]
+    keys=simpleFormatter,jsonFormatter
+    
+    [logger_root]
+    level={{LOG_LEVEL}}
+    handlers=consoleHandler,fileHandler
+    
+    [handler_consoleHandler]
+    class=StreamHandler
+    level={{LOG_LEVEL}}
+    formatter=jsonFormatter
+    args=(sys.stdout,)
+    
+    [handler_fileHandler]
+    class=FileHandler
+    level={{LOG_LEVEL}}
+    formatter=jsonFormatter
+    args=('{{LOG_FILE}}',)
+    
+    [formatter_simpleFormatter]
+    format=%(asctime)s - %(name)s - %(levelname)s - %(message)s
+    
+    [formatter_jsonFormatter]
+    format={"timestamp":"%(asctime)s","name":"%(name)s","level":"%(levelname)s","message":"%(message)s"}
