@@ -3,17 +3,23 @@ info:
   title: AI Agent Web Service
   description: |
     AI Agent统一Web服务API，提供PrototypeDesign Agent等AI服务的统一接口。
-    
+
     ## 内网访问地址
-    - 完整域名: `http://web-service.ai-agents.svc.cluster.local:8000`
-    - 简化域名: `http://web-service:8000` (同命名空间内)
-    
+    - 完整域名: `http://web-service.ai-agents.svc.cluster.local`
+    - 简化域名: `http://web-service` (同命名空间内)
+    - 本机调试: `http://localhost:8080` (通过port-forward或Docker Compose)
+
     ## 特性
-    - 内网域名访问
-    - 服务发现
-    - 负载均衡
-    - 健康检查
+    - 标准化内网域名访问（80端口）
+    - Kubernetes服务发现
+    - 负载均衡和高可用
+    - 完整的健康检查
     - 多副本部署
+    - Docker Compose调试支持
+
+    ## 部署方式
+    - **Kubernetes**: 生产环境推荐，支持自动扩缩容
+    - **Docker Compose**: 本地开发调试，模拟K8s环境
   version: 1.0.0
   contact:
     name: AI Agent开发团队
@@ -23,10 +29,12 @@ info:
     url: https://opensource.org/licenses/MIT
 
 servers:
-  - url: http://web-service.ai-agents.svc.cluster.local:8000
+  - url: http://web-service.ai-agents.svc.cluster.local
     description: K8s集群内网地址（完整域名）
-  - url: http://web-service:8000
+  - url: http://web-service
     description: K8s集群内网地址（简化域名，同命名空间）
+  - url: http://localhost:8080
+    description: 本机调试地址（通过port-forward或Docker Compose）
 
 paths:
   /health:
@@ -119,6 +127,65 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /metrics:
+    get:
+      summary: Prometheus指标
+      description: 获取Prometheus格式的监控指标
+      operationId: getMetrics
+      tags:
+        - 监控
+      responses:
+        '200':
+          description: Prometheus指标数据
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: |
+                  # HELP http_requests_total Total number of HTTP requests
+                  # TYPE http_requests_total counter
+                  http_requests_total{method="GET",status="200"} 1234
+
+                  # HELP http_request_duration_seconds HTTP request duration
+                  # TYPE http_request_duration_seconds histogram
+                  http_request_duration_seconds_bucket{le="0.1"} 100
+
+  /ready:
+    get:
+      summary: 就绪检查
+      description: 检查服务是否准备好接收流量，用于K8s readinessProbe
+      operationId: readinessCheck
+      tags:
+        - 监控
+      responses:
+        '200':
+          description: 服务就绪
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadinessResponse'
+        '503':
+          description: 服务未就绪
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /docs:
+    get:
+      summary: API文档
+      description: 获取交互式API文档（Swagger UI）
+      operationId: getApiDocs
+      tags:
+        - 文档
+      responses:
+        '200':
+          description: API文档页面
+          content:
+            text/html:
+              schema:
+                type: string
+
 components:
   schemas:
     HealthResponse:
@@ -207,6 +274,36 @@ components:
           type: string
           description: 备注信息
 
+    ReadinessResponse:
+      type: object
+      required:
+        - status
+        - ready
+      properties:
+        status:
+          type: string
+          enum: [ready, not_ready]
+          description: 就绪状态
+        ready:
+          type: boolean
+          description: 是否就绪
+        message:
+          type: string
+          description: 状态描述
+        checks:
+          type: object
+          description: 各项检查结果
+          properties:
+            database:
+              type: boolean
+              description: 数据库连接状态
+            external_services:
+              type: boolean
+              description: 外部服务连接状态
+            dependencies:
+              type: boolean
+              description: 依赖服务状态
+
     DesignRequest:
       type: object
       required:
@@ -274,10 +371,48 @@ components:
 
 tags:
   - name: 监控
-    description: 健康检查和监控相关接口
+    description: 健康检查、就绪检查和监控指标接口
   - name: 服务信息
     description: 服务发现和信息查询接口
   - name: Agent
     description: AI Agent相关接口
   - name: 原型设计
     description: 原型设计功能接口
+  - name: 文档
+    description: API文档和帮助信息
+
+# 安全配置
+security: []  # 当前版本无需认证，后续版本可能添加API Key或JWT认证
+
+# 外部文档
+externalDocs:
+  description: 完整的部署和使用文档
+  url: https://github.com/your-org/ai-agents/blob/main/web-service/README.md
+
+# 扩展信息
+x-kubernetes:
+  namespace: ai-agents
+  service-name: web-service
+  service-port: 80
+  container-port: 8000
+
+x-docker-compose:
+  service-name: web-service
+  ports:
+    - "8080:8000"  # 本机访问端口
+    - "8000:8000"  # 直接访问端口
+
+x-monitoring:
+  health-check: /health
+  readiness-check: /ready
+  metrics: /metrics
+
+x-deployment:
+  environments:
+    - development
+    - staging
+    - production
+  scaling:
+    min-replicas: 2
+    max-replicas: 10
+    target-cpu: 70%
